@@ -1,3 +1,7 @@
-FROM continuumio/anaconda3
+FROM hjobrien/yolo_util
 
-RUN conda install -c menpo opencv
+WORKDIR /app
+
+RUN git clone https://github.com/pjreddie/darknet.git && cd darknet && make
+
+CMD ./darknet
