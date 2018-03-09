@@ -1,6 +1,5 @@
 numpy
 six
-sys
 tarfile
 tensorflow
 zipfile
