@@ -50,3 +50,8 @@ class Object:
     #TODO: Fill in string method
     def __str__(self):
         return ""
+
+class Frame:
+
+    def __init__(self, image):
+        self.image = image
