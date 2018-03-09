@@ -1,7 +1,5 @@
 numpy
-os
 six
-sys
 tarfile
 tensorflow
 zipfile
@@ -11,3 +9,9 @@ collections
 io
 matplotlib
 PIL
+argparse
+scipy
+pandas
+keras
+yolo_utils
+yad2k.models.keras_yolo
