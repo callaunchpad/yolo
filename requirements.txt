@@ -8,5 +8,3 @@ argparse
 scipy
 pandas
 keras
-yad2k.models.keras_yolo
-yolo_utils
