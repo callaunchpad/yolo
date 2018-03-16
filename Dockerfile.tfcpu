@@ -1,7 +1,0 @@
-FROM hjobrien/yolo_util
-
-WORKDIR /app
-
-RUN git clone https://github.com/pjreddie/darknet.git && cd darknet && make
-
-CMD ./darknet
