@@ -1,54 +1,80 @@
-from sklearn.cluster import KMeans
+import numpy as np
 
-def n_clusters(frames):
-    boxes = 0
-    for frame in frames:
-        boxes+=len(frames.boxes)
-    return boxes/len(frames)
 
-def kmeans(frames):
-    bounding_boxes = []
-    for frame in frames:
-        bounding_boxes.append(frame.boxes)
+def iou(box, clusters):
+    """
+    Calculates the Intersection over Union (IoU) between a box and k clusters.
+    :param box: tuple or array, shifted to the origin (i. e. width and height)
+    :param clusters: numpy array of shape (k, 2) where k is the number of clusters
+    :return: numpy array of shape (k, 0) where k is the number of clusters
+    """
+    x = np.minimum(clusters[:, 0], box[0])
+    y = np.minimum(clusters[:, 1], box[1])
+    if np.count_nonzero(x == 0) > 0 or np.count_nonzero(y == 0) > 0:
+        raise ValueError("Box has no area")
 
-    #TRYNA USE KMEANS TO FIND OBJECTS
-    # Number of clusters
-    kmeans = KMeans(n_clusters(frames))
-    # Fitting the input data
-    kmeans = kmeans.fit(bounding_boxes)
-    # Getting the cluster labels
-    labels = kmeans.predict(bounding_boxes)
-    # Centroid values
-    centroids = kmeans.cluster_centers_
+    intersection = x * y
+    box_area = box[0] * box[1]
+    cluster_area = clusters[:, 0] * clusters[:, 1]
 
-    #create list of objects
-    objects = []
-    for centroid in centroids:
+    iou_ = intersection / (box_area + cluster_area - intersection)
 
-    #return list of Objects with updated bounding boxes
-    return objects
+    return iou_
 
-def iou(box1, box2):
-  “”"Implement the intersection over union (IoU) between box1 and box2
 
-  Arguments:
-  box1 -- first box, list object with coordinates (x1, y1, x2, y2)
-  box2 -- second box, list object with coordinates (x1, y1, x2, y2)
-  “”"
+def avg_iou(boxes, clusters):
+    """
+    Calculates the average Intersection over Union (IoU) between a numpy array of boxes and k clusters.
+    :param boxes: numpy array of shape (r, 2), where r is the number of rows
+    :param clusters: numpy array of shape (k, 2) where k is the number of clusters
+    :return: average IoU as a single float
+    """
+    return np.mean([np.max(iou(boxes[i], clusters)) for i in range(boxes.shape[0])])
 
-  #Calculate the (y1, x1, y2, x2) coordinates of the intersection of box1 and box2. Calculate its Area.
-  xi1 = max(box1[0], box2[0])
-  yi1 = max(box1[1], box2[1])
-  xi2 = min(box1[2], box2[2])
-  yi2 = min(box1[3], box2[3])
-  inter_area = (xi2 - xi1) * (yi2 - yi1)
 
-  #Calculate the Union area by using Formula: Union(A,B) = A + B - Inter(A,B)
-  box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
-  box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
-  union_area = box1_area + box2_area - inter_area
+def translate_boxes(boxes):
+    """
+    Translates all the boxes to the origin.
+    :param boxes: numpy array of shape (r, 4)
+    :return: numpy array of shape (r, 2)
+    """
+    new_boxes = boxes.copy()
+    for row in range(new_boxes.shape[0]):
+        new_boxes[row][2] = np.abs(new_boxes[row][2] - new_boxes[row][0])
+        new_boxes[row][3] = np.abs(new_boxes[row][3] - new_boxes[row][1])
+    return np.delete(boxes, [0, 1], axis=1)
 
-  #Compute the IoU
-  iou = inter_area / union_area
 
-  return iou
+def kmeans(boxes, k, dist=np.median):
+    """
+    Calculates k-means clustering with the Intersection over Union (IoU) metric.
+    :param boxes: numpy array of shape (r, 2), where r is the number of rows
+    :param k: number of clusters
+    :param dist: distance function
+    :return: numpy array of shape (k, 2)
+    """
+    rows = boxes.shape[0]
+
+    distances = np.empty((rows, k))
+    last_clusters = np.zeros((rows,))
+
+    np.random.seed()
+
+    # the Forgy method will fail if the whole array contains the same rows
+    clusters = boxes[np.random.choice(rows, k, replace=False)]
+
+    while True:
+        for row in range(rows):
+            distances[row] = 1 - iou(boxes[row], clusters)
+
+        nearest_clusters = np.argmin(distances, axis=1)
+
+        if (last_clusters == nearest_clusters).all():
+            break
+
+        for cluster in range(k):
+            clusters[cluster] = dist(boxes[nearest_clusters == cluster], axis=0)
+
+        last_clusters = nearest_clusters
+
+    return clusters
