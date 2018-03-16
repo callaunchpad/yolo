@@ -36,8 +36,9 @@ PATH_TO_LABELS = os.path.join('data', 'mscoco_label_map.pbtxt')
 NUM_CLASSES = 90
 
 # default_frame = []
-last_5_frames = [[], [], [], [], []]
+last_5_frames = [[], [], [], [], [], [], [], [], [], []]
 frame_count = 0
+globalID = 0
 
 #Download Model
 #Commented out if already downloaded
@@ -161,6 +162,7 @@ def update_obj_list(new_obj_list):
 def detect_objects(image_np, sess, detection_graph):
     global last_5_frames
     global frame_count
+    global globalID
     # Definite input and output Tensors for detection_graph
     image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
     # Each box represents a part of the image where a particular object was detected.
@@ -210,7 +212,7 @@ def detect_objects(image_np, sess, detection_graph):
         cent = obj.get_centroid()
         # plt.text(cent[0], cent[1], "ID: " + str(obj.id), bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
         for frame in range(len(last_5_frames)):
-            lastFrame = frame_count % 5 - frame
+            lastFrame = (frame_count % len(last_5_frames)) - frame
             for image in range(len(last_5_frames[lastFrame])):
                 object = last_5_frames[lastFrame][image]
                 if abs(object[0][0] - cent[0]) < 50 and abs(object[0][1] - cent[1]) < 50:
@@ -225,12 +227,16 @@ def detect_objects(image_np, sess, detection_graph):
                 continue
             break
         if not marked:
-            plt.text(cent[0], cent[1], "ID: " + str(obj.id), bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
+            updateID = globalObjectsList[objIndex]
+            updateID.id = globalID
+            globalObjectsList[objIndex] = updateID
+            globalID += 1
+            plt.text(cent[0], cent[1], "ID: " + str(updateID.id), bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
                     #plt.text(cent[0], cent[1], "ID: " + str(obj.id), bbox={'facecolor':'red', 'alpha':0.5, 'pad':5})
 
-    last_5_frames[frame_count % 5] = []
+    last_5_frames[frame_count % len(last_5_frames)] = []
     for obj in globalObjectsList:
-        last_5_frames[frame_count % 5].append([obj.get_centroid(), obj.id])
+        last_5_frames[frame_count % len(last_5_frames)].append([obj.get_centroid(), obj.id])
 
     frame_count += 1
 
