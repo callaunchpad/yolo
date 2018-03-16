@@ -62,6 +62,7 @@ class Frame:
 
     #should take in a frame and detect all of the objects
     #save instance variables of objects that have detection threshold of over THRESHOLD
+    #Set NUM DETECTIONS
     def __init__(self, image):
         self.image = image
 
