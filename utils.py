@@ -28,12 +28,16 @@ class BoundingBox:
     def get_centroid(self):
         return (self.xmin + (self.xmax - self.xmin)/2, self.ymin + (self.ymax - self.ymin)/2)
 
+    def get_area(self):
+        return self.get_width() * self.get_height()
+
     #TODO: Fill in string method
     def __str__(self):
         return ""
 
 class Object:
     id_count = 0
+    types = {}
 
     def __init__(self, classification):
         self.id = id_count
@@ -53,5 +57,23 @@ class Object:
 
 class Frame:
 
+    #define detection threshold for Frame, use default for RCNN
+    THRESHOLD = 0.5
+
+    #should take in a frame and detect all of the objects
+    #save instance variables of objects that have detection threshold of over THRESHOLD
     def __init__(self, image):
         self.image = image
+
+        self.objects = []
+
+    #returns number of detections over the threshold
+    def get_num_detections(self):
+        return self.num_detections
+
+    def get_num_detections_type_filter(self, given_class):
+        num_type_det = 0
+        for obj in self.objects:
+            if (obj.classification == given_class):
+                num_type_det += 1
+        return num_type_det
