@@ -25,14 +25,11 @@ def get_k_from_avg_type_filter(frames, given_class):
 def k_means(objects, k, dist=np.median):
     centroids = np.array([obj.get_centroid for obj in objects])
     kmeans_approx = Kmeans(n_clusters=k, random_state=0).fit_predict(centroids)
-    grouped_object_list = []
-    for i in range(k):
-        grouped_object_list.append([])
+    grouped_object_list = [None for i in range(k)]
     for i in range(kmeans_approx.shape[0]):
-        grouped_object_list[kmeans_approx[i]].append(objects[i])
-    combined_objects = []
-    for group_list in grouped_object_list:
-        for i in range(1, group_list):
-            group_list[0].add_box(group_list[i].boxes[0], group_list[i].score)
+        if grouped_object_list[i] is None:
+            grouped_object_list[kmeans_approx[i]] = objects[i]
+        else:
+            grouped_object_list[kmeans_approx[i]].combine_objects(objects[i])
 
-    return [group_list[0] for group_list in combined_objects]
+    return grouped_object_list

@@ -51,6 +51,11 @@ class Object:
         self.boxes.append(bounding_box)
         self.scores.append(score)
 
+    def combine_objects(self, other):
+        self.boxes.extend(other.boxes)
+        self.scores.extend(other.scores)
+
+
     #TODO: Fill in string method
     def __str__(self):
         return ""
