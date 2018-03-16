@@ -73,13 +73,25 @@ class Frame:
 
         self.objects = []
 
+
+        #DETECT OBJECTS THEN RUN THIS
+        self.class_dict = {}
+        for obj in objects:
+            if obj.classification not in self.class_dict:
+                self.class_dict[obj.classification] = 1
+            else:
+                self.class_dict[obj.classification] = self.class_dict[obj.classification] + 1
+
     #returns number of detections over the threshold
     def get_num_detections(self):
-        return self.num_detections
+        return len(self.objects)
+
+    def get_objects_of_type(self, given_class):
+        ret = []
+        for obj in objects:
+            if obj.classification == given_class:
+                ret.append(obj)
+        return ret
 
     def get_num_detections_type_filter(self, given_class):
-        num_type_det = 0
-        for obj in self.objects:
-            if (obj.classification == given_class):
-                num_type_det += 1
-        return num_type_det
+        return self.class_dict[given_class]
