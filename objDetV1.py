@@ -204,16 +204,21 @@ def detect_objects(image_np, sess, detection_graph):
 
     plt.figure(figsize=IMAGE_SIZE)
     plt.imshow(image_np)
-    for obj in globalObjectsList:
+    for objIndex in range(len(globalObjectsList)):
         marked = False
+        obj = globalObjectsList[objIndex]
         cent = obj.get_centroid()
         # plt.text(cent[0], cent[1], "ID: " + str(obj.id), bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
         for frame in range(len(last_5_frames)):
-            for image in range(len(last_5_frames[frame])):
-                object = last_5_frames[frame][image]
+            lastFrame = frame_count % 5 - frame
+            for image in range(len(last_5_frames[lastFrame])):
+                object = last_5_frames[lastFrame][image]
                 if abs(object[0][0] - cent[0]) < 50 and abs(object[0][1] - cent[1]) < 50:
                     plt.text(cent[0], cent[1], "ID: " + str(object[1]), bbox={'facecolor': 'blue', 'alpha': 0.5, 'pad': 5})
-                    last_5_frames[frame][image][0] = cent
+                    last_5_frames[lastFrame][image][0] = cent
+                    updateID = globalObjectsList[objIndex]
+                    updateID.id = object[1]
+                    globalObjectsList[objIndex] = updateID
                     marked = True
                     break
             else:
