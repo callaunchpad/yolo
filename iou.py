@@ -24,6 +24,7 @@ def kmeans(frames):
     #create list of objects
     objects = []
     for centroid in centroids:
+        objects.append()
 
     #return list of Objects with updated bounding boxes
     return objects
