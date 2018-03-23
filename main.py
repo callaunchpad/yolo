@@ -18,8 +18,8 @@ CWD_PATH = os.getcwd()
 #NUMWORKERS = 2
 FILENAME = ''
 
-IMAGE_WIDTH = 144
-IMAGE = 144
+IMAGE_WIDTH = 608
+IMAGE_HEIGHT = 608
 FRAME_GAP = 2
 BUFFER_SIZE = 4
 
@@ -36,7 +36,6 @@ NUM_CLASSES = "" #TODO
 Loading label map
 '''
 #Load model into memory
-
 detection_graph = tf.Graph()
 with detection_graph.as_default():
   od_graph_def = tf.GraphDef()
@@ -69,8 +68,10 @@ if __name__ == '__main__':
                 if frame is None:
                     break
                 if frame_num % frame_gap == 0:
-                    ## THIS IS WHERE WE DO SHIT
-                    image_buffer.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                    #add a frame to the current buffer
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    frame_rgb = cv2.resize(frame_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT))
+                    image_buffer.append(frame_rgb)
                 if len(image_buffer) == BUFFER_SIZE:
                     print("pushing buffer")
                     #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
