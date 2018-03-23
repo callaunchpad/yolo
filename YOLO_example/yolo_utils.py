@@ -41,6 +41,7 @@ def scale_boxes(boxes, image_shape):
 def preprocess_image(img_path, model_image_size):
     image_type = imghdr.what(img_path)
     image = Image.open(img_path)
+    print(image.shape)
     resized_image = image.resize(tuple(reversed(model_image_size)), Image.BICUBIC)
     image_data = np.array(resized_image, dtype='float32')
     image_data /= 255.
