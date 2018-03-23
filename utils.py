@@ -73,8 +73,8 @@ class Frame:
 
         self.objects = []
 
-
         #DETECT OBJECTS THEN RUN THIS
+
         self.class_dict = {}
         for obj in objects:
             if obj.classification not in self.class_dict:
