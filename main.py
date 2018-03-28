@@ -6,10 +6,6 @@ import multiprocessing
 import numpy as np
 import tensorflow as tf
 
-#NOTE currently multiprocessing imports are unused
-from multiprocessing import Queue, Pool
-
-
 from utils import *
 import clustering
 
@@ -29,8 +25,7 @@ CONSTANTS THAT NEED TO BE FILLED OUT
 MODEL_NAME = "" #TODO
 PATH_TO_CKPT = "" #TODO
 PATH_TO_LABELS = "" #TODO
-NUM_CLASSES = "" #TODO
-
+NUM_CLASSES =  #TODO
 
 '''
 Loading label map
@@ -48,6 +43,10 @@ label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
 category_index = label_map_util.create_category_index(categories)
 
+def run_detection_on_buffer(images):
+    print("Detecting for buffer")
+    frames = [Frame(image) for image in images]
+    clustering.k_means_type_split(frames)
 
 #INIT global objects List
 global OBJECTS_LIST
@@ -75,7 +74,7 @@ if __name__ == '__main__':
                 if len(image_buffer) == BUFFER_SIZE:
                     print("pushing buffer")
                     #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
-
+                    run_detection_on_buffer(image_buffer)
                     #EMPTY BUFFER
                     image_buffer = []
 
