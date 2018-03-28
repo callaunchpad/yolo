@@ -77,10 +77,10 @@ class Frame:
     #should take in a frame and detect all of the objects
     #save instance variables of objects that have detection threshold of over THRESHOLD
     #Set NUM DETECTIONS
-    def __init__(self, sess, graph, image):
+    def __init__(self, sess, image):
         self.image = image
 
-        self.objects = createObjectList(sess, graph, image)
+        self.objects = createObjectList(sess, image)
 
         self.class_dict = {}
         for obj in objects:
@@ -104,7 +104,7 @@ class Frame:
         return self.class_dict[given_class]
 
 
-def createObjectList(sess, graph, image):
+def createObjectList(sess, image):
     objects_list = []
     out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={yolo_model.input: image_data, K.learning_phase(): 0})
     print('Found {} boxes for {}'.format(len(out_boxes), image_file))
