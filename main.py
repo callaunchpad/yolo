@@ -24,7 +24,7 @@ CONSTANTS THAT NEED TO BE FILLED OUT
 '''
 MODEL_NAME = "Full YOLO Model" #TODO
 PATH_TO_CKPT = "YOLO_example/model_data/yolo.h5" #TODO
-PATH_TO_LABELS = "" #TODO
+PATH_TO_LABELS = "YOLO_example/model_data/coco_classes.txt" #TODO
 NUM_CLASSES = 80 #TODO
 
 '''
