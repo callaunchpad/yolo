@@ -11,12 +11,12 @@ class BoundingBox:
     Constructor for taking an RCNN box variable.
     Assumes image shape is a tuple of form (width, height)
     '''
-    def __init__(rcnnbox, im_shape, classification):
+    def __init__(rcnnbox, classification):
         ymin, xmin, ymax, xmax = box
-        self.ymin = ymin * im_shape[1]
-        self.ymax = ymax * im_shape[1]
-        self.xmin = xmin * im_shape[0]
-        self.xmax = xmax * im_shape[0]
+        self.ymin = ymin * IMAGE_HEIGHT
+        self.ymax = ymax * IMAGE_HEIGHT
+        self.xmin = xmin * IMAGE_WIDTH
+        self.xmax = xmax * IMAGE_WIDTH
         self.classification = classification
 
     def get_width(self):
@@ -46,6 +46,15 @@ class Object:
         self.boxes = []
         self.scores = []
 
+    #TAKES IN A BOX AND CLASSIFICATION
+    def __init__(self, classification, rcnnbox, score):
+        self.id = id_count
+        Object.id_count += 1
+        self.classification = classification
+        self.boxes = [BoundingBox(rcnnbox, classification)]
+        self.scores = [score]
+
+
     #Takes in bounding box object and score
     def add_box(self, bounding_box, score):
         self.boxes.append(bounding_box)
@@ -68,12 +77,10 @@ class Frame:
     #should take in a frame and detect all of the objects
     #save instance variables of objects that have detection threshold of over THRESHOLD
     #Set NUM DETECTIONS
-    def __init__(self, image):
+    def __init__(self, sess, graph, image):
         self.image = image
 
-        self.objects = []
-
-        #DETECT OBJECTS THEN RUN THIS
+        self.objects = createObjectList(sess, graph, image)
 
         self.class_dict = {}
         for obj in objects:
@@ -95,3 +102,15 @@ class Frame:
 
     def get_num_detections_type_filter(self, given_class):
         return self.class_dict[given_class]
+
+
+def createObjectList(sess, graph, image):
+    objects_list = []
+    out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={yolo_model.input: image_data, K.learning_phase(): 0})
+    print('Found {} boxes for {}'.format(len(out_boxes), image_file))
+
+    for i in len(out_scores):
+        new_obj = Object(out_classes[i], out_boxes[i], out_scores[i])
+        objects_list.append(new_obj)
+
+    return objects_list
