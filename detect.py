@@ -13,7 +13,6 @@ def predict(sess, image_file, graph):
 
     """
     objects_list = []
-    image, image_data = preprocess_image("images/" + image_file, model_image_size = (608, 608))
     out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={yolo_model.input: image_data, K.learning_phase(): 0})
 
     for i in len(out_scores):
