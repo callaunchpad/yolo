@@ -28,8 +28,11 @@ BUFFER_SIZE = 4
 CONSTANTS THAT NEED TO BE FILLED OUT
 '''
 CLASS_NAMES = read_classes("YOLO_example/model_data/coco_classes.txt")
+print("read classes")
 ANCHORS = read_anchors("YOLO_example/model_data/yolo_anchors.txt")
+print("read anchors")
 YOLO_MODEL = load_model("YOLO_example/model_data/yolo.h5")
+print("loaded model")
 sess = K.get_session()
 
 ''''
