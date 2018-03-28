@@ -1,1 +1,2 @@
 *.pyc
+YOLO_example/model_data/yolo.h5
