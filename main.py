@@ -5,6 +5,11 @@ import argparse
 import multiprocessing
 import numpy as np
 import tensorflow as tf
+from keras import backend as K
+from keras.layers import Input, Lambda, Conv2D
+from keras.models import load_model, Model
+from yolo_utils import read_classes, read_anchors, generate_colors, preprocess_image, draw_boxes, scale_boxes
+from YOLO_example.yad2k.models.keras_yolo import yolo_head, yolo_boxes_to_corners, preprocess_true_boxes, yolo_loss, yolo_body
 
 from utils import *
 import clustering
@@ -22,14 +27,19 @@ BUFFER_SIZE = 4
 '''
 CONSTANTS THAT NEED TO BE FILLED OUT
 '''
+CLASS_NAMES = read_classes("YOLO_example/model_data/coco_classes.txt")
+ANCHORS = read_anchors("YOLO_example/model_data/yolo_anchors.txt")
+YOLO_MODEL = load_model("YOLO_example/model_data/yolo.h5")
+sess = K.get_session()
+
+''''
 MODEL_NAME = "Full YOLO Model" #TODO
 PATH_TO_CKPT = "YOLO_example/model_data/yolo.h5" #TODO
 PATH_TO_LABELS = "YOLO_example/model_data/coco_classes.txt" #TODO
 NUM_CLASSES = 80 #TODO
-
+'''
 '''
 Loading label map
-'''
 #Load model into memory
 detection_graph = tf.Graph()
 with detection_graph.as_default():
@@ -42,10 +52,11 @@ with detection_graph.as_default():
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
 category_index = label_map_util.create_category_index(categories)
+'''
 
 def run_detection_on_buffer(images):
     print("Detecting for buffer")
-    frames = [Frame(image) for image in images]
+    frames = [Frame(sess, image) for image in images]
     clustering.k_means_type_split(frames)
 
 #INIT global objects List
@@ -60,24 +71,21 @@ if __name__ == '__main__':
     frame_num = 0
     image_buffer = []
 
-    with detection_graph.as_default():
-        with tf.Session(graph=detection_graph) as sess:
-            while(cap.isOpened()):
-                ret, frame = cap.read()
-                if frame is None:
-                    break
-                if frame_num % frame_gap == 0:
-                    #add a frame to the current buffer
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    frame_rgb = cv2.resize(frame_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT))
-                    image_buffer.append(frame_rgb)
-                if len(image_buffer) == BUFFER_SIZE:
-                    print("pushing buffer")
-                    #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
-                    run_detection_on_buffer(image_buffer)
-                    #EMPTY BUFFER
-                    image_buffer = []
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        if frame is None:
+            break
+        if frame_num % frame_gap == 0:
+            #add a frame to the current buffer
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame_rgb = cv2.resize(frame_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT))
+            image_buffer.append(frame_rgb)
+        if len(image_buffer) == BUFFER_SIZE:
+            print("pushing buffer")
+            #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
+            run_detection_on_buffer(image_buffer)
+            #EMPTY BUFFER
+            image_buffer = []
+        frame_num += 1
 
-                frame_num += 1
-
-    cap.release()
+cap.release()
