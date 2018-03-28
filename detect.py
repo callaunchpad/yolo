@@ -17,7 +17,7 @@ def predict(sess, image_file, graph):
     out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={yolo_model.input: image_data, K.learning_phase(): 0})
 
     for i in len(out_scores):
-        new_obj = new Object(out_classes[i])
+        new_obj = Object(out_classes[i])
         new_obj.boxes = out_boxes[i]
         new_obj.scores = out_scores[i]
         objects_list.append(new_obj)
