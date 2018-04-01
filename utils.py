@@ -1,3 +1,5 @@
+from main import IMAGE_HEIGHT, IMAGE_WIDTH
+
 class BoundingBox:
 
     def __init__(xmin, ymin, xmax, ymax, classification):
@@ -11,12 +13,12 @@ class BoundingBox:
     Constructor for taking an RCNN box variable.
     Assumes image shape is a tuple of form (width, height)
     '''
-    def __init__(rcnnbox, classification):
+    def __init__(self, box, classification):
         ymin, xmin, ymax, xmax = box
-        self.ymin = ymin * IMAGE_HEIGHT
-        self.ymax = ymax * IMAGE_HEIGHT
-        self.xmin = xmin * IMAGE_WIDTH
-        self.xmax = xmax * IMAGE_WIDTH
+        self.ymin = ymin
+        self.ymax = ymax
+        self.xmin = xmin
+        self.xmax = xmax
         self.classification = classification
 
     def get_width(self):
@@ -48,12 +50,11 @@ class Object:
 
     #TAKES IN A BOX AND CLASSIFICATION
     def __init__(self, classification, rcnnbox, score):
-        self.id = id_count
+        self.id = Object.id_count
         Object.id_count += 1
         self.classification = classification
         self.boxes = [BoundingBox(rcnnbox, classification)]
         self.scores = [score]
-
 
     #Takes in bounding box object and score
     def add_box(self, bounding_box, score):
@@ -64,6 +65,8 @@ class Object:
         self.boxes.extend(other.boxes)
         self.scores.extend(other.scores)
 
+    def get_init_centroid(self):
+        return  self.boxes[0].get_centroid()
 
     #TODO: Fill in string method
     def __str__(self):
@@ -77,40 +80,36 @@ class Frame:
     #should take in a frame and detect all of the objects
     #save instance variables of objects that have detection threshold of over THRESHOLD
     #Set NUM DETECTIONS
-    def __init__(self, sess, image):
+    def __init__(self, image, objects_list):
         self.image = image
 
-        self.objects = createObjectList(sess, image)
+        self.objects = objects_list
 
         self.class_dict = {}
-        for obj in objects:
+        for obj in self.objects:
             if obj.classification not in self.class_dict:
                 self.class_dict[obj.classification] = 1
             else:
                 self.class_dict[obj.classification] = self.class_dict[obj.classification] + 1
-
     #returns number of detections over the threshold
     def get_num_detections(self):
         return len(self.objects)
 
     def get_objects_of_type(self, given_class):
         ret = []
-        for obj in objects:
+        for obj in self.objects:
             if obj.classification == given_class:
                 ret.append(obj)
         return ret
 
     def get_num_detections_type_filter(self, given_class):
-        return self.class_dict[given_class]
+        return self.class_dict.get(given_class, 0)
 
-
-def createObjectList(sess, image):
-    objects_list = []
-    out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={yolo_model.input: image_data, K.learning_phase(): 0})
-    print('Found {} boxes for {}'.format(len(out_boxes), image_file))
-
-    for i in len(out_scores):
-        new_obj = Object(out_classes[i], out_boxes[i], out_scores[i])
-        objects_list.append(new_obj)
-
-    return objects_list
+def list_centroids(objects):
+    index = 1
+    for obj in objects:
+        printstr = ""
+        for box in obj.boxes:
+            printstr = printstr + " " + str(box.get_centroid())
+        print("Object " + str(index) + " " + str(obj.classification) + ":  " + printstr)
+        index += 1
