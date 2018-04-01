@@ -44,7 +44,7 @@ class Object:
     def __init__(self, classification):
         self.id = id_count
         Object.id_count += 1
-        self.classification = classification
+        self.class = classification
         self.boxes = []
         self.scores = []
 
@@ -55,6 +55,7 @@ class Object:
         self.classification = classification
         self.boxes = [BoundingBox(rcnnbox, classification)]
         self.scores = [score]
+        self.score = score;
 
     #Takes in bounding box object and score
     def add_box(self, bounding_box, score):
@@ -113,3 +114,35 @@ def list_centroids(objects):
             printstr = printstr + " " + str(box.get_centroid())
         print("Object " + str(index) + " " + str(obj.classification) + ":  " + printstr)
         index += 1
+        return self.class_dict[given_class]
+
+
+def createObjectList(sess, image):
+    objects_list = []
+    out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={yolo_model.input: image_data, K.learning_phase(): 0})
+    print('Found {} boxes for {}'.format(len(out_boxes), image_file))
+
+    for i in len(out_scores):
+        new_obj = Object(out_classes[i], out_boxes[i], out_scores[i])
+        objects_list.append(new_obj)
+
+    return objects_list
+
+from YOLO_example import yolo_utils
+from yolo_utils import draw_boxes, generate_colors, read_classes
+
+def drawObjects(image, objects_list) :
+    out_scores = [];
+    out_boxes = [];
+    out_classes = [];
+    class_names = read_classes("../YOLO_example/model_data/coco_classes.txt")
+    colors = generate_colors(class_names)
+
+    for obj in objects_list :
+        out_scores.append(obj.scores[id_count - 1]);
+        box = [obj.boxes[id_count - 1].xmin, obj.boxes[id_count - 1].ymin,
+            obj.boxes[id_count - 1].xmax, obj.boxes[id_count - 1].ymax]
+        out_boxes.append(box)
+        out_classes.append(obj.class)
+
+    draw_boxes(image, out_scores, out_boxes, out_classes, class_names, colors)
