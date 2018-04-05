@@ -44,7 +44,7 @@ class Object:
     def __init__(self, classification):
         self.id = id_count
         Object.id_count += 1
-        self.class = classification
+        self.classification = classification
         self.boxes = []
         self.scores = []
 
@@ -114,19 +114,7 @@ def list_centroids(objects):
             printstr = printstr + " " + str(box.get_centroid())
         print("Object " + str(index) + " " + str(obj.classification) + ":  " + printstr)
         index += 1
-        return self.class_dict[given_class]
-
-
-def createObjectList(sess, image):
-    objects_list = []
-    out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={yolo_model.input: image_data, K.learning_phase(): 0})
-    print('Found {} boxes for {}'.format(len(out_boxes), image_file))
-
-    for i in len(out_scores):
-        new_obj = Object(out_classes[i], out_boxes[i], out_scores[i])
-        objects_list.append(new_obj)
-
-    return objects_list
+    return printstr
 
 from YOLO_example import yolo_utils
 from yolo_utils import draw_boxes, generate_colors, read_classes
@@ -143,6 +131,6 @@ def drawObjects(image, objects_list) :
         box = [obj.boxes[id_count - 1].xmin, obj.boxes[id_count - 1].ymin,
             obj.boxes[id_count - 1].xmax, obj.boxes[id_count - 1].ymax]
         out_boxes.append(box)
-        out_classes.append(obj.class)
+        out_classes.append(obj.classification)
 
     draw_boxes(image, out_scores, out_boxes, out_classes, class_names, colors)
