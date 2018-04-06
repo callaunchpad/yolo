@@ -1,4 +1,7 @@
 from main import IMAGE_HEIGHT, IMAGE_WIDTH
+from matplotlib import pyplot as plt
+from PIL import Image
+from visualization_utils import *
 
 class BoundingBox:
 
@@ -33,6 +36,9 @@ class BoundingBox:
     def get_area(self):
         return self.get_width() * self.get_height()
 
+    def get_as_array(self):
+        return [self.xmin, self.ymin, self.xmax, self.ymax]
+
     #TODO: Fill in string method
     def __str__(self):
         return ""
@@ -61,6 +67,12 @@ class Object:
     def add_box(self, bounding_box, score):
         self.boxes.append(bounding_box)
         self.scores.append(score)
+
+    def get_box(self, ind):
+        return self.boxes[ind]
+
+    def get_score(self, ind):
+        return self.scores[ind]
 
     def combine_objects(self, other):
         self.boxes.extend(other.boxes)
@@ -92,6 +104,12 @@ class Frame:
                 self.class_dict[obj.classification] = 1
             else:
                 self.class_dict[obj.classification] = self.class_dict[obj.classification] + 1
+
+        #draw_objects_on_image(image, self.objects)
+        #print("I SHOULD SHOW AN IMAGE HERE YO")
+        #plt.imshow(image)
+        #plt.show()
+
     #returns number of detections over the threshold
     def get_num_detections(self):
         return len(self.objects)
@@ -119,18 +137,18 @@ def list_centroids(objects):
 from YOLO_example import yolo_utils
 from yolo_utils import draw_boxes, generate_colors, read_classes
 
-def drawObjects(image, objects_list) :
-    out_scores = [];
-    out_boxes = [];
-    out_classes = [];
-    class_names = read_classes("../YOLO_example/model_data/coco_classes.txt")
+def draw_objects_on_image(image, objects_list, ind=-1) :
+    out_scores = []
+    out_boxes = []
+    out_classes = []
+    class_names = read_classes("YOLO_example/model_data/coco_classes.txt")
     colors = generate_colors(class_names)
 
-    for obj in objects_list :
-        out_scores.append(obj.scores[id_count - 1]);
-        box = [obj.boxes[id_count - 1].xmin, obj.boxes[id_count - 1].ymin,
-            obj.boxes[id_count - 1].xmax, obj.boxes[id_count - 1].ymax]
+    for obj in objects_list:
+        box = obj.get_box(ind).get_as_array()
+        draw_bounding_box_on_image_array(image, box[1], box[0], box[3], box[2], use_normalized_coordinates=False)
+        out_scores.append(obj.get_score(ind))
         out_boxes.append(box)
         out_classes.append(obj.classification)
 
-    draw_boxes(image, out_scores, out_boxes, out_classes, class_names, colors)
+    #draw_boxes(image, out_scores, out_boxes, out_classes, class_names, colors)
