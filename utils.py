@@ -47,6 +47,8 @@ class Object:
         self.classification = classification
         self.boxes = []
         self.scores = []
+        self.past_x = []
+        self.past_y = []
 
     #TAKES IN A BOX AND CLASSIFICATION
     def __init__(self, classification, rcnnbox, score):
@@ -56,6 +58,9 @@ class Object:
         self.boxes = [BoundingBox(rcnnbox, classification)]
         self.scores = [score]
         self.score = score;
+        self.past_x = []
+        self.past_y = []
+        self.update_Past(BoundingBox(rcnnbox, classification))
 
     #Takes in bounding box object and score
     def add_box(self, bounding_box, score):
@@ -72,6 +77,13 @@ class Object:
     #TODO: Fill in string method
     def __str__(self):
         return ""
+
+    def update_Past(self, box):
+        centroid = box.get_centroid()
+        self.past_x.append(centroid[0])
+        self.past_y.append(centroid[1])
+
+
 
 class Frame:
 
