@@ -68,11 +68,11 @@ class Object:
         self.boxes.append(bounding_box)
         self.scores.append(score)
 
-    def get_last_box(self):
-        return self.boxes[-1]
+    def get_box(self, ind):
+        return self.boxes[ind]
 
-    def get_last_score(self):
-        return self.scores[-1]
+    def get_score(self, ind):
+        return self.scores[ind]
 
     def combine_objects(self, other):
         self.boxes.extend(other.boxes)
@@ -137,17 +137,17 @@ def list_centroids(objects):
 from YOLO_example import yolo_utils
 from yolo_utils import draw_boxes, generate_colors, read_classes
 
-def draw_objects_on_image(image, objects_list) :
+def draw_objects_on_image(image, objects_list, ind=-1) :
     out_scores = []
     out_boxes = []
     out_classes = []
     class_names = read_classes("YOLO_example/model_data/coco_classes.txt")
     colors = generate_colors(class_names)
 
-    for obj in objects_list :
-        box = obj.get_last_box().get_as_array()
+    for obj in objects_list:
+        box = obj.get_box(ind).get_as_array()
         draw_bounding_box_on_image_array(image, box[1], box[0], box[3], box[2], use_normalized_coordinates=False)
-        out_scores.append(obj.get_last_score())
+        out_scores.append(obj.get_score(ind))
         out_boxes.append(box)
         out_classes.append(obj.classification)
 
