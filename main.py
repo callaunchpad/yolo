@@ -20,7 +20,7 @@ FILENAME = 'videos/people.mp4'
 
 IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
-FRAME_GAP = 2
+FRAME_GAP = 4
 BUFFER_SIZE = 4
 
 '''
@@ -56,10 +56,14 @@ def create_object_list(sess, image):
 
 def run_detection_on_buffer(images):
     print("Detecting for buffer")
-    frames = [Frame(image, createObjectList(sess, image)) for image in images]
+    frames = [Frame(image, create_object_list(sess, image)) for image in images]
     objs_after_cluster = k_means_type_split(frames)
     print("KMEANS RETURN HERE")
     list_centroids(objs_after_cluster)
+    draw_objects_on_image(images[-1], objs_after_cluster, ind=-3)
+
+    plt.imshow(images[-1])
+    plt.show()
     return objs_after_cluster
 
 #INIT global objects List
