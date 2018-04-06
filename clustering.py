@@ -11,14 +11,14 @@ def get_k_from_avg(frames):
     for frame in frames:
         total_detection_count += frame.get_num_detections()
 
-    return total_detection_count / len(frames)
+    return int(total_detection_count / len(frames))
 
 def get_k_from_avg_type_filter(frames, given_class):
     total_detection_count = 0
     for frame in frames:
         total_detection_count += frame.get_num_detections_type_filter(given_class)
 
-    return total_detection_count / len(frames)
+    return int(total_detection_count / len(frames))
 
 def get_obj_arr_type(frames, type_class):
     objects = []
@@ -27,27 +27,30 @@ def get_obj_arr_type(frames, type_class):
     return objects
 
 def compile_joint_typeset(frames):
-    typeset = set()
+    typeset = []
     for frame in frames:
-        typeset.union(frame.class_dict.keys())
-    return typeset
+        typeset.extend(frame.class_dict.keys())
+    return list(set(typeset))
 
 def k_means_type_split(frames):
-    types = frames.compile_joint_typeset()
+    types = compile_joint_typeset(frames)
     final_objects = []
     for type_class in types:
         k = get_k_from_avg_type_filter(frames, type_class)
-        objs = get_obj_arr_type(frames, type_class)
-        final_objects.extend(k_means(objs, k))
+        if k != 0:
+            objs = get_obj_arr_type(frames, type_class)
+            kmeans_ret = k_means(objs, k)
+            final_objects.extend(kmeans_ret)
     return final_objects
 
 #need to determine of object type is the same
 def k_means(objects, k):
-    centroids = np.array([obj.get_centroid for obj in objects])
-    kmeans_approx = Kmeans(n_clusters=k, random_state=0).fit_predict(centroids)
+    centroids = np.array([obj.get_init_centroid() for obj in objects])
+    kmeans_approx = KMeans(n_clusters=k, random_state=0).fit_predict(centroids)
     grouped_object_list = [None for i in range(k)]
+
     for i in range(kmeans_approx.shape[0]):
-        if grouped_object_list[i] is None:
+        if grouped_object_list[kmeans_approx[i]] is None:
             grouped_object_list[kmeans_approx[i]] = objects[i]
         else:
             grouped_object_list[kmeans_approx[i]].combine_objects(objects[i])

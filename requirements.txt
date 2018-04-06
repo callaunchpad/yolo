@@ -8,3 +8,4 @@ argparse
 scipy
 pandas
 keras
+sklearn
