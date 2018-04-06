@@ -39,13 +39,16 @@ image_shape = (float(IMAGE_HEIGHT), float(IMAGE_WIDTH))
 yolo_outputs = yolo_head(YOLO_MODEL.output, ANCHORS, len(CLASS_NAMES))
 scores, boxes, classes = yolo_eval(yolo_outputs, image_shape)
 
-def createObjectList(sess, image):
+def create_object_list(sess, image):
     objects_list = []
-    image_data = np.expand_dims(image, 0)
+    image_data = np.array(image, dtype='float32')
+    image_data /= 255.
+    image_data = np.expand_dims(image_data, 0)
     out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={YOLO_MODEL.input: image_data, K.learning_phase(): 0})
     print('Found {} boxes '.format(len(out_boxes)))
 
     for i in range(len(out_scores)):
+        print("Detected Object: " + str(out_classes[i]) + " " + str(out_boxes[i]) + " "+ str(out_scores[i]))
         new_obj = Object(out_classes[i], out_boxes[i], out_scores[i])
         objects_list.append(new_obj)
 

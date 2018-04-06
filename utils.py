@@ -105,10 +105,10 @@ class Frame:
             else:
                 self.class_dict[obj.classification] = self.class_dict[obj.classification] + 1
 
-        drawObjects(image, self.objects)
-        print("I SHOULD SHOW AN IMAGE HERE YO")
-        plt.imshow(image)
-        plt.show()
+        #draw_objects_on_image(image, self.objects)
+        #print("I SHOULD SHOW AN IMAGE HERE YO")
+        #plt.imshow(image)
+        #plt.show()
 
     #returns number of detections over the threshold
     def get_num_detections(self):
@@ -137,7 +137,7 @@ def list_centroids(objects):
 from YOLO_example import yolo_utils
 from yolo_utils import draw_boxes, generate_colors, read_classes
 
-def drawObjects(image, objects_list) :
+def draw_objects_on_image(image, objects_list) :
     out_scores = []
     out_boxes = []
     out_classes = []
