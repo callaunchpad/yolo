@@ -20,7 +20,7 @@ FILENAME = 'videos/people.mp4'
 
 IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
-FRAME_GAP = 2
+FRAME_GAP = 4
 BUFFER_SIZE = 4
 
 '''
@@ -39,13 +39,16 @@ image_shape = (float(IMAGE_HEIGHT), float(IMAGE_WIDTH))
 yolo_outputs = yolo_head(YOLO_MODEL.output, ANCHORS, len(CLASS_NAMES))
 scores, boxes, classes = yolo_eval(yolo_outputs, image_shape)
 
-def createObjectList(sess, image):
+def create_object_list(sess, image):
     objects_list = []
-    image_data = np.expand_dims(image, 0)
+    image_data = np.array(image, dtype='float32')
+    image_data /= 255.
+    image_data = np.expand_dims(image_data, 0)
     out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={YOLO_MODEL.input: image_data, K.learning_phase(): 0})
     print('Found {} boxes '.format(len(out_boxes)))
 
     for i in range(len(out_scores)):
+        print("Detected Object: " + str(out_classes[i]) + " " + str(out_boxes[i]) + " "+ str(out_scores[i]))
         new_obj = Object(out_classes[i], out_boxes[i], out_scores[i])
         objects_list.append(new_obj)
 
@@ -53,10 +56,14 @@ def createObjectList(sess, image):
 
 def run_detection_on_buffer(images):
     print("Detecting for buffer")
-    frames = [Frame(image, createObjectList(sess, image)) for image in images]
+    frames = [Frame(image, create_object_list(sess, image)) for image in images]
     objs_after_cluster = k_means_type_split(frames)
     print("KMEANS RETURN HERE")
     list_centroids(objs_after_cluster)
+    draw_objects_on_image(images[-1], objs_after_cluster, ind=-3)
+
+    plt.imshow(images[-1])
+    plt.show()
     return objs_after_cluster
 
 #INIT global objects List
