@@ -5,14 +5,18 @@ import argparse
 import multiprocessing
 import numpy as np
 import tensorflow as tf
+from keras import backend as K
+from keras.layers import Input, Lambda, Conv2D
+from keras.models import load_model, Model
+from yolo_utils import *
 
 from utils import *
-import clustering
+from clustering import *
 
 CWD_PATH = os.getcwd()
 
 #NUMWORKERS = 2
-FILENAME = ''
+FILENAME = 'videos/people.mp4'
 
 IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
@@ -22,31 +26,38 @@ BUFFER_SIZE = 4
 '''
 CONSTANTS THAT NEED TO BE FILLED OUT
 '''
-MODEL_NAME = "Full YOLO Model" #TODO
-PATH_TO_CKPT = "YOLO_example/model_data/yolo.h5" #TODO
-PATH_TO_LABELS = "YOLO_example/model_data/coco_classes.txt" #TODO
-NUM_CLASSES = 80 #TODO
+CLASS_NAMES = read_classes("YOLO_example/model_data/coco_classes.txt")
+print("read classes")
+ANCHORS = read_anchors("YOLO_example/model_data/yolo_anchors.txt")
+print("read anchors")
+YOLO_MODEL = load_model("YOLO_example/model_data/yolo.h5")
+print("loaded model")
+sess = K.get_session()
 
-'''
-Loading label map
-'''
-#Load model into memory
-detection_graph = tf.Graph()
-with detection_graph.as_default():
-  od_graph_def = tf.GraphDef()
-  with tf.gfile.GFile(PATH_TO_CKPT, 'rb') as fid:
-    serialized_graph = fid.read()
-    od_graph_def.ParseFromString(serialized_graph)
-    tf.import_graph_def(od_graph_def, name='')
+image_shape = (float(IMAGE_HEIGHT), float(IMAGE_WIDTH))
 
-label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
-categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
-category_index = label_map_util.create_category_index(categories)
+yolo_outputs = yolo_head(YOLO_MODEL.output, ANCHORS, len(CLASS_NAMES))
+scores, boxes, classes = yolo_eval(yolo_outputs, image_shape)
+
+def createObjectList(sess, image):
+    objects_list = []
+    image_data = np.expand_dims(image, 0)
+    out_scores, out_boxes, out_classes = sess.run([scores, boxes, classes], feed_dict={YOLO_MODEL.input: image_data, K.learning_phase(): 0})
+    print('Found {} boxes '.format(len(out_boxes)))
+
+    for i in range(len(out_scores)):
+        new_obj = Object(out_classes[i], out_boxes[i], out_scores[i])
+        objects_list.append(new_obj)
+
+    return objects_list
 
 def run_detection_on_buffer(images):
     print("Detecting for buffer")
-    frames = [Frame(image) for image in images]
-    clustering.k_means_type_split(frames)
+    frames = [Frame(image, createObjectList(sess, image)) for image in images]
+    objs_after_cluster = k_means_type_split(frames)
+    print("KMEANS RETURN HERE")
+    list_centroids(objs_after_cluster)
+    return objs_after_cluster
 
 #INIT global objects List
 global OBJECTS_LIST
@@ -60,24 +71,23 @@ if __name__ == '__main__':
     frame_num = 0
     image_buffer = []
 
-    with detection_graph.as_default():
-        with tf.Session(graph=detection_graph) as sess:
-            while(cap.isOpened()):
-                ret, frame = cap.read()
-                if frame is None:
-                    break
-                if frame_num % frame_gap == 0:
-                    #add a frame to the current buffer
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    frame_rgb = cv2.resize(frame_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT))
-                    image_buffer.append(frame_rgb)
-                if len(image_buffer) == BUFFER_SIZE:
-                    print("pushing buffer")
-                    #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
-                    run_detection_on_buffer(image_buffer)
-                    #EMPTY BUFFER
-                    image_buffer = []
-
-                frame_num += 1
+    while(cap.isOpened()):
+        print("Video Frame ", frame_num)
+        ret, frame = cap.read()
+        if frame is None:
+            break
+        if frame_num % FRAME_GAP == 0:
+            #add a frame to the current buffer
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame_rgb = cv2.resize(frame_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT))
+            image_buffer.append(frame_rgb)
+        if len(image_buffer) == BUFFER_SIZE:
+            print("pushing buffer")
+            #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
+            val = run_detection_on_buffer(image_buffer)
+            print(val)
+            #EMPTY BUFFER
+            image_buffer = []
+        frame_num += 1
 
     cap.release()
