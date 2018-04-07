@@ -128,8 +128,7 @@ def list_centroids(objects):
         index += 1
     return printstr
 
-from YOLO_example import yolo_utils
-from yolo_utils import draw_boxes, generate_colors, read_classes
+from yolo_utils import read_classes, generate_colors
 
 def drawObjects(image, objects_list) :
     out_scores = [];
