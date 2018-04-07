@@ -1,7 +1,4 @@
 from main import IMAGE_HEIGHT, IMAGE_WIDTH
-from matplotlib import pyplot as plt
-from PIL import Image
-from visualization_utils import *
 
 class BoundingBox:
 
@@ -36,9 +33,6 @@ class BoundingBox:
     def get_area(self):
         return self.get_width() * self.get_height()
 
-    def get_as_array(self):
-        return [self.xmin, self.ymin, self.xmax, self.ymax]
-
     #TODO: Fill in string method
     def __str__(self):
         return ""
@@ -53,6 +47,8 @@ class Object:
         self.classification = classification
         self.boxes = []
         self.scores = []
+        self.past_x = []
+        self.past_y = []
 
     #TAKES IN A BOX AND CLASSIFICATION
     def __init__(self, classification, rcnnbox, score):
@@ -62,17 +58,14 @@ class Object:
         self.boxes = [BoundingBox(rcnnbox, classification)]
         self.scores = [score]
         self.score = score;
+        self.past_x = []
+        self.past_y = []
+        self.update_Past(BoundingBox(rcnnbox, classification))
 
     #Takes in bounding box object and score
     def add_box(self, bounding_box, score):
         self.boxes.append(bounding_box)
         self.scores.append(score)
-
-    def get_box(self, ind):
-        return self.boxes[ind]
-
-    def get_score(self, ind):
-        return self.scores[ind]
 
     def combine_objects(self, other):
         self.boxes.extend(other.boxes)
@@ -84,6 +77,13 @@ class Object:
     #TODO: Fill in string method
     def __str__(self):
         return ""
+
+    def update_Past(self, box):
+        centroid = box.get_centroid()
+        self.past_x.append(centroid[0])
+        self.past_y.append(centroid[1])
+
+
 
 class Frame:
 
@@ -104,12 +104,6 @@ class Frame:
                 self.class_dict[obj.classification] = 1
             else:
                 self.class_dict[obj.classification] = self.class_dict[obj.classification] + 1
-
-        #draw_objects_on_image(image, self.objects)
-        #print("I SHOULD SHOW AN IMAGE HERE YO")
-        #plt.imshow(image)
-        #plt.show()
-
     #returns number of detections over the threshold
     def get_num_detections(self):
         return len(self.objects)
@@ -136,18 +130,18 @@ def list_centroids(objects):
 
 from yolo_utils import read_classes, generate_colors
 
-def draw_objects_on_image(image, objects_list, ind=-1) :
-    out_scores = []
-    out_boxes = []
-    out_classes = []
-    class_names = read_classes("YOLO_example/model_data/coco_classes.txt")
+def drawObjects(image, objects_list) :
+    out_scores = [];
+    out_boxes = [];
+    out_classes = [];
+    class_names = read_classes("../YOLO_example/model_data/coco_classes.txt")
     colors = generate_colors(class_names)
 
-    for obj in objects_list:
-        box = obj.get_box(ind).get_as_array()
-        draw_bounding_box_on_image_array(image, box[1], box[0], box[3], box[2], use_normalized_coordinates=False)
-        out_scores.append(obj.get_score(ind))
+    for obj in objects_list :
+        out_scores.append(obj.scores[id_count - 1]);
+        box = [obj.boxes[id_count - 1].xmin, obj.boxes[id_count - 1].ymin,
+            obj.boxes[id_count - 1].xmax, obj.boxes[id_count - 1].ymax]
         out_boxes.append(box)
         out_classes.append(obj.classification)
 
-    #draw_boxes(image, out_scores, out_boxes, out_classes, class_names, colors)
+    draw_boxes(image, out_scores, out_boxes, out_classes, class_names, colors)
