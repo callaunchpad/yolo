@@ -17,10 +17,11 @@ from neighbors import *
 CWD_PATH = os.getcwd()
 
 #NUMWORKERS = 2
-FILENAME = 'videos/people.mp4'
+FILENAME = 'videos/dashfootage.mp4'
 
 IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
+FRAME_SKIP = 60
 FRAME_GAP = 1
 BUFFER_SIZE = 12
 
@@ -84,7 +85,7 @@ if __name__ == '__main__':
         ret, frame = cap.read()
         if frame is None:
             break
-        if frame_num % FRAME_GAP == 0:
+        if frame_num > FRAME_SKIP and frame_num % FRAME_GAP == 0:
             #add a frame to the current buffer
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame_rgb = cv2.resize(frame_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT))
