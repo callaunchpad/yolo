@@ -3,3 +3,6 @@ YOLO_example/model_data/yolo.h5
 venv/
 videos/bball2.mp4
 YOLO_example/.ipynb_checkpoints/
+YOLO_example/out
+.DS_Store
+YOLO_example/.DS_Store
