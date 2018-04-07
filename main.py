@@ -11,7 +11,8 @@ from keras.models import load_model, Model
 from yolo_utils import *
 
 from utils import *
-from clustering import *
+#from clustering import *
+from neighbors import *
 
 CWD_PATH = os.getcwd()
 
@@ -20,8 +21,8 @@ FILENAME = 'videos/people.mp4'
 
 IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
-FRAME_GAP = 4
-BUFFER_SIZE = 4
+FRAME_GAP = 1
+BUFFER_SIZE = 12
 
 '''
 CONSTANTS THAT NEED TO BE FILLED OUT
@@ -57,7 +58,7 @@ def create_object_list(sess, image):
 def run_detection_on_buffer(images):
     print("Detecting for buffer")
     frames = [Frame(image, create_object_list(sess, image)) for image in images]
-    objs_after_cluster = k_means_type_split(frames)
+    objs_after_cluster = dbscan_type_split(frames)
     print("KMEANS RETURN HERE")
     list_centroids(objs_after_cluster)
     draw_objects_on_image(images[-1], objs_after_cluster, ind=-3)
