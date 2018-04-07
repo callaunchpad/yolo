@@ -120,8 +120,8 @@ class Frame:
 
 def list_centroids(objects):
     index = 1
+    printstr = ""
     for obj in objects:
-        printstr = ""
         for box in obj.boxes:
             printstr = printstr + " " + str(box.get_centroid())
         print("Object " + str(index) + " " + str(obj.classification) + ":  " + printstr)
