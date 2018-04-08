@@ -92,6 +92,8 @@ class Obj:
         self.score = score
         self.box = box
         self.frames_since_seen = 0
+        self.past_x = [self.get_centroid()[0]]
+        self.past_y = [self.get_centroid()[1]]
 
     def get_box_width(self):
         return (self.box[3] - self.box[1]) * self.im_width
@@ -136,6 +138,14 @@ class Obj:
             return
         self.score = identical_obj.score
         self.box = identical_obj.box
+
+    def update_past(self) :
+        self.past_x.append([self.get_centroid()[0]])
+        self.past_y.append([self.get_centroid()[1]])
+
+    def update_past(self, x, y):
+        self.past_x = self.past_x + [x]
+        self.past_y = self.past_y + [y]
 
     ######## magic comparison functions so that python's default PQ works ##########
 
@@ -245,7 +255,7 @@ def detect_objects(image_np, sess, detection_graph):
         line_thickness=12)
 
 
-    plt.figure(figsize=IMAGE_SIZE)
+    plt.figure(1, figsize=IMAGE_SIZE)
     plt.imshow(image_np)
 
     # goes through every object in global list
@@ -275,6 +285,10 @@ def detect_objects(image_np, sess, detection_graph):
 
                     # obj.frames_since_seen = 0
                     # globalObjectsPQ.put(obj)
+
+                    obj.update_past(object[0][0], object[0][1])
+                    regression(obj)
+
                     break
             frame += 1
             obj.updatePriority
@@ -294,10 +308,37 @@ def detect_objects(image_np, sess, detection_graph):
     for obj in globalObjectsList:
         last_n_frames[frame_count % n_frames].append([obj.get_centroid(), obj.id])
 
+
+
     frame_count += 1
+    plt.figure(1, figsize=IMAGE_SIZE)
     plt.show()
     printPQ(globalObjectsPQ)
     return image_np, createObjectList(image_np, boxes, classes, scores)
+
+def regression(obj) :
+
+    print("HI??")
+    print("IDDDD " + str(obj.id) + "             LEN " + str(len(obj.past_x)))
+
+    if len(obj.past_x) > 5 :
+
+        print('WHAT THE FUCK IS UP')
+
+        x = np.asarray(obj.past_x)
+        y = np.asarray(obj.past_y)
+
+        z = np.polyfit(x, y, 1)
+        p = np.poly1d(z)
+
+
+        xp = np.linspace(np.amin(x) - 5, np.amax(x) + 5, 100)
+
+        plt.figure(24)
+        plt.plot(x, y, '.')
+        plt.plot(xp, p(xp), '.')
+        plt.ylim(np.amin(y) - 5, np.amax(y) + 5)
+        plt.show()
 
 
 #Declare global variables
