@@ -107,6 +107,14 @@ class Obj:
         ymax *= self.im_height
         return (xmin + (xmax - xmin)/2, ymin + (ymax - ymin)/2)
 
+    def get_box_coordinates(self):
+        ymin, xmin, ymax, xmax = self.box
+        xmin *= self.im_width
+        xmax *= self.im_width
+        ymin *= self.im_height
+        ymax *= self.im_height
+        return ((xmax, ymax), (xmin, ymin))
+
     def __str__(self):
         ret = "Detected Object ID: " + str(self.id)
         ret += " Type= " + str(self.classification) + " "
