@@ -60,7 +60,6 @@ def run_detection_on_buffer(images):
     print("Detecting for buffer")
     frames = [Frame(image, create_object_list(sess, image)) for image in images]
     objs_after_cluster = dbscan_type_split(frames)
-    print("KMEANS RETURN HERE")
     list_centroids(objs_after_cluster)
     draw_objects_on_image(images[-1], objs_after_cluster, ind=-3)
 
