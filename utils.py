@@ -1,16 +1,11 @@
-from main import IMAGE_HEIGHT, IMAGE_WIDTH
+#from main import IMAGE_HEIGHT, IMAGE_WIDTH
 from matplotlib import pyplot as plt
 from PIL import Image
 from visualization_utils import *
+from yolo_utils import read_classes, generate_colors
 
 class BoundingBox:
 
-    def __init__(xmin, ymin, xmax, ymax, classification):
-        self.xmin = xmin
-        self.xmax = xmax
-        self.ymin = ymin
-        self.ymax = ymax
-        self.classification = classification
 
     '''
     Constructor for taking an RCNN box variable.
@@ -37,11 +32,11 @@ class BoundingBox:
         return self.get_width() * self.get_height()
 
     def get_as_array(self):
-        return [self.xmin, self.ymin, self.xmax, self.ymax]
+        return np.array([self.xmin, self.ymin, self.xmax, self.ymax])
 
     #TODO: Fill in string method
     def __str__(self):
-        return ""
+        return str(self.get_as_array())
 
 class Object:
     id_count = 0
@@ -80,6 +75,36 @@ class Object:
 
     def get_init_centroid(self):
         return  self.boxes[0].get_centroid()
+
+    def form_data_array(self):
+        ret_matrix = np.empty((4,))
+        for box in self.boxes:
+            boxarr = box.get_as_array()
+            ret_matrix = np.vstack((ret_matrix, boxarr))
+        return ret_matrix.T
+
+    def predict_box(self, degree):
+        data = self.form_data_array()
+        xmin = data[0]
+        ymin = data[1]
+        xmax = data[2]
+        ymax = data[3]
+
+        minpred = np.polyfit(xmin, ymin, degree)
+        minpoly = np.poly1d(minpred)
+        maxpred = np.polyfit(xmin, ymin, degree)
+        maxpoly = np.poly1d(maxpred)
+
+        xmindisp = get_avg_displacement(xmin)
+        xmaxdisp = get_avg_displacement(xmax)
+
+        xmin_point = xmin[-1] + xmindisp
+        xmax_point = xmax[-1] + xmaxdisp
+
+        ymin_point = minpoly(xmin_point)
+        ymax_point = minpoly(xmax_point)
+        box = [xmin_point, ymin_point, xmax_point, ymax_point]
+        return BoundingBox(box, self.classification)
 
     #TODO: Fill in string method
     def __str__(self):
@@ -134,8 +159,6 @@ def list_centroids(objects):
         index += 1
     return printstr
 
-from yolo_utils import read_classes, generate_colors
-
 def draw_objects_on_image(image, objects_list, ind=-1) :
     out_scores = []
     out_boxes = []
@@ -150,4 +173,23 @@ def draw_objects_on_image(image, objects_list, ind=-1) :
         out_boxes.append(box)
         out_classes.append(obj.classification)
 
-    #draw_boxes(image, out_scores, out_boxes, out_classes, class_names, colors)
+def iou(box1, box2):
+    area1 = box1.get_area()
+    area2 = box2.get_area()
+
+    xi1 = max(box1.xmin, box2.xmin)
+    yi1 = max(box1.ymin, box2.ymin)
+    xi2 = min(box1.xmax, box2.xmax)
+    yi2 = min(box1.ymax, box2.ymax)
+    inter_area = (xi2 - xi1) * (yi2 - yi1)
+
+    union_area = area1 + area2 - inter_area
+    iou = inter_area / union_area
+
+    return iou
+
+def get_avg_displacement(arr):
+    front = arr[:-1]
+    back = arr[1:]
+    diff = back - front
+    return np.mean(diff)
