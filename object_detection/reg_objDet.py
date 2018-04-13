@@ -37,11 +37,9 @@ PATH_TO_LABELS = os.path.join('data', 'mscoco_label_map.pbtxt')
 NUM_CLASSES = 90
 
 # number of previous frames that we want to track
-FRAMES_TO_TRACK = 10
-# distance of pixels from centroid to identify as same objects
-ID_DIST = 100
+frames_to_track = 10
 # list of lists - used to store n previous frames' objects
-last_n_frames = [[] for x in range(FRAMES_TO_TRACK)]
+last_n_frames = []
 # current frame in the video
 frame_count = 0
 # ID # for number of objects seen
@@ -111,14 +109,6 @@ class Obj:
         ymax *= self.im_height
         return (xmin + (xmax - xmin)/2, ymin + (ymax - ymin)/2)
 
-    def get_box_coordinates(self):
-        ymin, xmin, ymax, xmax = self.box
-        xmin *= self.im_width
-        xmax *= self.im_width
-        ymin *= self.im_height
-        ymax *= self.im_height
-        return ((xmax, ymax), (xmin, ymin))
-
     def __str__(self):
         ret = "Detected Object ID: " + str(self.id)
         ret += " Type= " + str(self.classification) + " "
@@ -156,6 +146,10 @@ class Obj:
     def update_past(self, x, y):
         self.past_x = self.past_x + [x]
         self.past_y = self.past_y + [y]
+
+    def setBox(self, box) :
+        self.box = box
+
 
     ######## magic comparison functions so that python's default PQ works ##########
 
@@ -216,43 +210,12 @@ def update_obj_list(new_obj_list):
                 closest_obj = curr_obj
         old_obj.update_properties(closest_obj)
 
-def identify_objects():
-    global last_n_frames
-    global frame_count
-    global globalID
-    for glb_index, glb_obj in enumerate(globalObjectsList):
-        gl_xcent, gl_ycent = glb_obj.get_centroid()
-        match_found = False
-        for frame in range(1, FRAMES_TO_TRACK):
-            closest = ID_DIST + 1
-            for frm_index, prv_obj in enumerate(last_n_frames[frame_count % FRAMES_TO_TRACK - frame]):
-                # retrieves x and y coords for the current global and prev object centroids
-                pr_xcent, pr_ycent = prv_obj.get_centroid()
-                dist = math.sqrt((gl_xcent - pr_xcent)**2 + (gl_ycent - pr_ycent)**2)
-                if dist < closest:
-                    match_found = True
-                    closest = dist
-                    matched_obj = prv_obj
-                    matched_idx = frm_index
-            if match_found:
-                plt.text(gl_xcent, gl_ycent, "ID: " + str(matched_obj.id), bbox={'facecolor': 'blue', 'alpha': 0.5, 'pad': 5})
-                globalObjectsList[glb_index].id = matched_obj.id
-                del last_n_frames[frame_count % FRAMES_TO_TRACK - frame][matched_idx]
-                break
-        if not match_found:
-            plt.text(gl_xcent, gl_ycent, "ID: " + str(globalID), bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
-            globalObjectsList[glb_index].id = globalID
-            globalID += 1
-    last_n_frames[frame_count % FRAMES_TO_TRACK] = []
-    for obj in globalObjectsList:
-        last_n_frames[frame_count % FRAMES_TO_TRACK].append(obj)
-    plt.text(0, 0, "Frame: " + str(frame_count), bbox={'facecolor': 'yellow', 'alpha': 0.5, 'pad': 5})
-    frame_count += 1
 
 def detect_objects(image_np, sess, detection_graph):
     global last_n_frames
     global frame_count
     global globalID
+    n_frames = frames_to_track
     # Definite input and output Tensors for detection_graph
     image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
     # Each box represents a part of the image where a particular object was detected.
@@ -275,10 +238,16 @@ def detect_objects(image_np, sess, detection_graph):
 
     global globalObjectsList
 
-    objList = createObjectList(image_np, boxes, classes, scores)
+    objList = createObjectList(image_np, boxes, classes, scores, )
     globalObjectsList = objList #the objects detected in each frame
+    # if len(globalObjectsList) == 0:
+    #     globalObjectsList = objList
+    # else:
+    #     update_obj_list(objList)
 
     printObjList(globalObjectsList)
+
+    globalObjectsPQ = queue.PriorityQueue(20)
 
     vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
@@ -292,12 +261,90 @@ def detect_objects(image_np, sess, detection_graph):
 
     plt.figure(1, figsize=IMAGE_SIZE)
     plt.imshow(image_np)
+    last_n_frames = [Obj(image_np, boxes[0], classes[0], scores[0]) for x in range(frames_to_track)]
 
-    ''' Plots IDs onto the objects '''
-    identify_objects()
+    # goes through every object in global list
+    for objIndex in range(len(globalObjectsList)):
+        marked = False
+        detected_obj = globalObjectsList[objIndex]
+        cent = detected_obj.get_centroid()
+        # plt.text(cent[0], cent[1], "ID: " + str(obj.id), bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
 
+        frame = 0   #index for frame
+
+        #checks last n frames
+        while (not marked and frame < n_frames): # marked = boolean for whether we found a match
+            lastFrame = frame_count % n_frames - frame
+
+            #checks every obj in the last n frames to see if there's a match
+            for image in range(len(last_n_frames)):
+                old_object = last_n_frames[lastFrame]
+                # if there's a match:
+                if abs(old_object.get_centroid()[0] - cent[0]) < 50 and abs(old_object.get_centroid()[1] - cent[1]) < 50:
+                    plt.text(cent[0], cent[1], "ID: " + str(old_object.id), bbox={'facecolor': 'blue', 'alpha': 0.5, 'pad': 5})
+                    #last_n_frames[lastFrame][image][0] = cent
+                    old_object.setBox(detected_obj.box)
+                    old_object.update_past(detected_obj.get_centroid()[0], detected_obj.get_centroid()[1])
+                    regression(old_object)
+
+                    globalObjectsList[objIndex] = old_object
+                    marked = True
+
+                    # obj.frames_since_seen = 0
+                    # globalObjectsPQ.put(obj)
+
+                    break
+            frame += 1
+            obj.updatePriority
+
+        if not marked:
+            # obj.frames_since_seen = 0;
+            # globalObjectsPQ.put(obj)
+            update_obj = globalObjectsList[objIndex]
+            update_obj.id = globalID
+            globalObjectsList[objIndex] = update_obj
+            globalID += 1
+            plt.text(cent[0], cent[1], "ID: " + str(update_obj.id), bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
+                    #plt.text(cent[0], cent[1], "ID: " + str(obj.id), bbox={'facecolor':'red', 'alpha':0.5, 'pad':5})
+
+    #last_n_frames[frame_count % n_frames] = []
+
+    for obj in globalObjectsList:
+        #print("AHHHHHH " + str(frame_count & n_frames) + "  AH? " + str(len(last_n_frames)))
+        last_n_frames[frame_count % n_frames] = obj
+
+
+
+    frame_count += 1
+    plt.figure(1, figsize=IMAGE_SIZE)
     plt.show()
-    return image_np, createObjectList(image_np, boxes, classes, scores)
+    printPQ(globalObjectsPQ)
+    return image_np, globalObjectsList
+
+def regression(obj) :
+
+    print("HI??")
+    print("IDDDD " + str(obj.id) + "             LEN " + str(len(obj.past_x)))
+    print(obj.past_x)
+
+    if len(obj.past_x) > 5 :
+
+        print('WHAT THE FUCK IS UP')
+
+        x = np.asarray(obj.past_x)
+        y = np.asarray(obj.past_y)
+
+        z = np.polyfit(x, y, 1)
+        p = np.poly1d(z)
+
+
+        xp = np.linspace(np.amin(x) - 5, np.amax(x) + 5, 100)
+
+        plt.figure(24)
+        plt.plot(x, y, '.')
+        plt.plot(xp, p(xp), '.')
+        plt.ylim(np.amin(y) - 5, np.amax(y) + 5)
+        plt.show()
 
 
 #Declare global variables
