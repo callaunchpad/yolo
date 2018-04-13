@@ -17,13 +17,13 @@ from neighbors import *
 CWD_PATH = os.getcwd()
 
 #NUMWORKERS = 2
-FILENAME = 'videos/highway.mp4'
+FILENAME = 'videos/people.mp4'
 
 IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
-FRAME_SKIP = 60
+FRAME_SKIP = 40
 FRAME_GAP = 1
-BUFFER_SIZE = 12
+BUFFER_SIZE = 6
 
 '''
 CONSTANTS THAT NEED TO BE FILLED OUT
@@ -63,8 +63,8 @@ def run_detection_on_buffer(images):
     list_centroids(objs_after_cluster)
     draw_objects_on_image(images[-1], objs_after_cluster, ind=-3)
 
-    plt.imshow(images[-1])
-    plt.show()
+    #plt.imshow(images[-1])
+    #plt.show()
     return objs_after_cluster
 
 #INIT global objects List
@@ -93,7 +93,11 @@ if __name__ == '__main__':
             print("pushing buffer")
             #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
             val = run_detection_on_buffer(image_buffer)
-            print(val)
+
+            #get last object
+            obj = val[0]
+            print(obj.predict_box(1))
+
             #EMPTY BUFFER
             image_buffer = []
         frame_num += 1
