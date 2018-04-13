@@ -23,7 +23,7 @@ IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
 FRAME_SKIP = 40
 FRAME_GAP = 1
-BUFFER_SIZE = 6
+BUFFER_SIZE = 8
 
 '''
 CONSTANTS THAT NEED TO BE FILLED OUT
@@ -67,6 +67,7 @@ def run_detection_on_buffer(images):
     #plt.show()
     return objs_after_cluster
 
+
 #INIT global objects List
 global OBJECTS_LIST
 OBJECTS_LIST = []
@@ -92,11 +93,9 @@ if __name__ == '__main__':
         if len(image_buffer) == BUFFER_SIZE:
             print("pushing buffer")
             #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
-            val = run_detection_on_buffer(image_buffer)
-
-            #get last object
-            obj = val[0]
-            print(obj.predict_box(1))
+            clustered_objs = run_detection_on_buffer(image_buffer)
+            if len(OBJECTS_LIST) == 0:
+                OBJECTS_LIST = clustered_objs
 
             #EMPTY BUFFER
             image_buffer = []

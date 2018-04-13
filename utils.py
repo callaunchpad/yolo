@@ -48,6 +48,7 @@ class Object:
         self.classification = classification
         self.boxes = []
         self.scores = []
+        self.prediction = None
 
     #TAKES IN A BOX AND CLASSIFICATION
     def __init__(self, classification, rcnnbox, score):
@@ -57,6 +58,8 @@ class Object:
         self.boxes = [BoundingBox(rcnnbox, classification)]
         self.scores = [score]
         self.score = score;
+        self.prediction = None
+
 
     #Takes in bounding box object and score
     def add_box(self, bounding_box, score):
@@ -83,7 +86,17 @@ class Object:
             ret_matrix = np.vstack((ret_matrix, boxarr))
         return ret_matrix.T
 
-    def predict_box(self, degree):
+    def get_avg_bounding_box(self):
+        data = self.form_data_array()
+        xmin = data[0]
+        ymin = data[1]
+        xmax = data[2]
+        ymax = data[3]
+        
+        box = [np.mean(xmin), np.mean(ymin), np.mean(xmax), np.mean(ymax)]
+        return BoundingBox(box, self.classification)
+
+    def predict_box(self, degree, buffer_size=1):
         data = self.form_data_array()
         xmin = data[0]
         ymin = data[1]
@@ -95,8 +108,8 @@ class Object:
         maxpred = np.polyfit(xmin, ymin, degree)
         maxpoly = np.poly1d(maxpred)
 
-        xmindisp = get_avg_displacement(xmin)
-        xmaxdisp = get_avg_displacement(xmax)
+        xmindisp = get_avg_displacement(xmin) * math.ceil(buffer_size/2)
+        xmaxdisp = get_avg_displacement(xmax) * math.ceil(buffer_size/2)
 
         xmin_point = xmin[-1] + xmindisp
         xmax_point = xmax[-1] + xmaxdisp
@@ -104,7 +117,7 @@ class Object:
         ymin_point = minpoly(xmin_point)
         ymax_point = minpoly(xmax_point)
         box = [xmin_point, ymin_point, xmax_point, ymax_point]
-        return BoundingBox(box, self.classification)
+        self.prediction = BoundingBox(box, self.classification)
 
     #TODO: Fill in string method
     def __str__(self):
@@ -172,6 +185,13 @@ def draw_objects_on_image(image, objects_list, ind=-1) :
         out_scores.append(obj.get_score(ind))
         out_boxes.append(box)
         out_classes.append(obj.classification)
+
+
+
+def associate_with_regression(global_objects, objects_cluster):
+    [obj.predict_box() for obj in global_objects]
+
+
 
 def iou(box1, box2):
     area1 = box1.get_area()
