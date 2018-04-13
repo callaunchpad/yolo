@@ -17,7 +17,7 @@ from neighbors import *
 CWD_PATH = os.getcwd()
 
 #NUMWORKERS = 2
-FILENAME = 'videos/output.mp4'
+FILENAME = 'videos/highway.mp4'
 
 IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
