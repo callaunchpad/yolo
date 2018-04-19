@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from PIL import Image
 from visualization_utils import *
 from yolo_utils import read_classes, generate_colors
+import numpy as np
 
 class BoundingBox:
 
@@ -92,7 +93,7 @@ class Object:
         ymin = data[1]
         xmax = data[2]
         ymax = data[3]
-        
+
         box = [np.mean(xmin), np.mean(ymin), np.mean(xmax), np.mean(ymax)]
         return BoundingBox(box, self.classification)
 
@@ -187,10 +188,18 @@ def draw_objects_on_image(image, objects_list, ind=-1) :
         out_classes.append(obj.classification)
 
 
-
+# runs predictions on global_objects
+# maximize iou btwn predictions and average cluster
+# add the best association to global_objects
 def associate_with_regression(global_objects, objects_cluster):
-    [obj.predict_box() for obj in global_objects]
-
+    predictions = [obj.predict_box() for obj in global_objects]
+    averages = [obj.get_avg_bounding_box() for obj in objects_cluster]
+    ious = []
+    for pred in predictions :
+        for avg in averages:
+            ious.append(iou(pred, avg))
+    best_association = max(ious)
+    global_objects.append(best_association)
 
 
 def iou(box1, box2):
