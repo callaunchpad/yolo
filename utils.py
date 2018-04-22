@@ -34,7 +34,7 @@ class BoundingBox:
         return self.get_width() * self.get_height()
 
     def get_as_array(self):
-        return np.array([self.xmin, self.ymin, self.xmax, self.ymax])
+        return np.array([self.ymin, self.xmin, self.ymax, self.xmax])
 
     #TODO: Fill in string method
     def __str__(self):
@@ -51,6 +51,7 @@ class Object:
         self.boxes = []
         self.scores = []
         self.prediction = None
+        self.detection_gap = 0;
 
     #TAKES IN A BOX AND CLASSIFICATION
     def __init__(self, classification, rcnnbox, score):
@@ -61,6 +62,7 @@ class Object:
         self.scores = [score]
         self.score = score;
         self.prediction = None
+        self.detection_gap = 0;
 
 
     def __eq__(self, other):
@@ -86,6 +88,7 @@ class Object:
     def combine_objects(self, other):
         self.boxes.extend(other.boxes)
         self.scores.extend(other.scores)
+        self.detection_gap = 0
 
     def get_init_centroid(self):
         return  self.boxes[0].get_centroid()
@@ -95,46 +98,56 @@ class Object:
         for box in self.boxes:
             boxarr = box.get_as_array()
             ret_matrix = np.vstack((ret_matrix, boxarr))
+        ret_matrix = ret_matrix[1:, :]
         return ret_matrix.T
 
     def get_avg_bounding_box(self):
         data = self.form_data_array()
-        xmin = data[0]
-        ymin = data[1]
-        xmax = data[2]
-        ymax = data[3]
+        ymin = data[0]
+        xmin = data[1]
+        ymax = data[2]
+        xmax = data[3]
 
-        box = [np.mean(xmin), np.mean(ymin), np.mean(xmax), np.mean(ymax)]
+        box = [np.mean(ymin), np.mean(xmin), np.mean(ymax), np.mean(xmax)]
         return BoundingBox(box, self.classification)
 
     def predict_box(self, degree, buffer_size=1):
         data = self.form_data_array()
-        xmin = data[0]
-        ymin = data[1]
-        xmax = data[2]
-        ymax = data[3]
+
+        ymin = data[0]
+        xmin = data[1]
+        ymax = data[2]
+        xmax = data[3]
 
         minpred = np.polyfit(xmin, ymin, degree)
         minpoly = np.poly1d(minpred)
         maxpred = np.polyfit(xmax, ymax, degree)
         maxpoly = np.poly1d(maxpred)
+        print("MIN POLY" + str(minpred))
+        print("MAX POLY" + str(maxpred))
 
         xmindisp = get_avg_displacement(xmin) * math.ceil(buffer_size/2)
         xmaxdisp = get_avg_displacement(xmax) * math.ceil(buffer_size/2)
+        print("XIMDISP: " + str(xmindisp))
+        print("XMAXDISP: " + str(xmaxdisp))
 
         xmin_point = xmin[-1] + xmindisp
         xmax_point = xmax[-1] + xmaxdisp
 
         ymin_point = minpoly(xmin_point)
-        ymax_point = minpoly(xmax_point)
+        ymax_point = maxpoly(xmax_point)
 
-        plt.plot(xmin, ymin, 'r')
-        plt.plot(xmax, ymax, 'b')
-        plt.show()
+        plt.plot(xmin, ymin, '-', color='orange')
+        plt.plot(xmax, ymax, '-', color='purple')
+        plt.plot(xmin[0], ymin[0], 'o', color='green')
+        plt.plot(xmax[0], ymax[0], 'o', color='green')
 
-        box = [xmin_point, ymin_point, xmax_point, ymax_point]
+        box = [ymin_point, xmin_point, ymax_point, xmax_point]
         self.prediction = BoundingBox(box, self.classification)
         return self.prediction
+
+    def update_det_gap(self):
+        self.detection_gap += 1
 
     #TODO: Fill in string method
     def __str__(self):
@@ -198,13 +211,13 @@ def draw_objects_on_image(image, objects_list, ind=-1) :
 
     for obj in objects_list:
         box = obj.get_box(ind).get_as_array()
-        draw_bounding_box_on_image_array(image, box[1], box[0], box[3], box[2], use_normalized_coordinates=False)
+        draw_bounding_box_on_image_array(image, box[0], box[1], box[2], box[3], use_normalized_coordinates=False)
 
         pred = obj.prediction
 
         if pred is not None:
             predbox = pred.get_as_array()
-            draw_bounding_box_on_image_array(image, predbox[1], predbox[0], predbox[3], predbox[2], use_normalized_coordinates=False, color='blue')
+            draw_bounding_box_on_image_array(image, predbox[0], predbox[1], predbox[2], predbox[3], use_normalized_coordinates=False, color='blue')
 
         out_scores.append(obj.get_score(ind))
         out_boxes.append(box)
@@ -222,10 +235,10 @@ def show_image(image, objects_list, ind=-1):
 @total_ordering
 class Score:
 
-    def __init__(self, global_object, cluster_object):
+    def __init__(self, global_object, cluster_object, buffer_size=1):
         self.global_object = global_object
         self.cluster_object = cluster_object
-        self.iou_score = iou(global_object.predict_box(1), cluster_object.get_avg_bounding_box())
+        self.iou_score = iou(global_object.prediction, cluster_object.get_avg_bounding_box())
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -249,12 +262,14 @@ class Score:
 # runs predictions on global_objects
 # maximize iou btwn predictions and average cluster
 # add the best association to global_objects
-def associate_with_regression(global_objects, objects_cluster):
+def associate_with_regression(global_objects, objects_cluster, buffer_size=1):
     scores = []
+    [obj.predict_box(1, buffer_size) for obj in global_objects]
+    [obj.update_det_gap() for obj in global_objects]
     print(global_objects)
     for global_obj in global_objects:
         for cluster_obj in objects_cluster:
-            scores.append(Score(global_obj, cluster_obj))
+            scores.append(Score(global_obj, cluster_obj, buffer_size))
 
     scores.sort()
     seen_global = set()
@@ -265,14 +280,23 @@ def associate_with_regression(global_objects, objects_cluster):
         if (curr.global_object in seen_global) or (curr.cluster_object in seen_cluster):
             continue
         else:
-            if curr.iou_score > 0:
+            if curr.iou_score > 0.2:
                 seen_global.add(curr.global_object)
                 seen_cluster.add(curr.cluster_object)
                 curr.global_object.combine_objects(curr.cluster_object)
 
+    [print(obj.detection_gap) for obj in global_objects]
+
+    to_remove = [obj for obj in global_objects if obj.detection_gap >= 3]
+
+    for obj in to_remove:
+        global_objects.remove(obj)
+
     global_objects.extend([obj for obj in objects_cluster if obj not in seen_cluster])
     #best_association = max(ious)
     #global_objects.append(best_association)
+
+
 
 
 def iou(box1, box2):
@@ -291,8 +315,4 @@ def iou(box1, box2):
     return iou
 
 def get_avg_displacement(arr):
-    front = arr[:-1]
-    back = arr[1:]
-    diff = back - front
-    print("DIFF ARRAY:" + str(diff))
-    return np.mean(diff)
+    return np.mean(np.diff(arr))

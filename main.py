@@ -61,7 +61,7 @@ def run_detection_on_buffer(images):
     print("Detecting for buffer")
     frames = [Frame(image, create_object_list(sess, image)) for image in images]
     objs_after_cluster = dbscan_type_split(frames)
-    list_centroids(objs_after_cluster)
+    #list_centroids(objs_after_cluster)
 
     return objs_after_cluster
 
@@ -96,7 +96,8 @@ if __name__ == '__main__':
                 OBJECTS_LIST = clustered_objs
                 buffer_size = BUFFER_SIZE
             else:
-                associate_with_regression(OBJECTS_LIST, clustered_objs)
+                #BUFFER SIZE IS LAST PARAM SET TO 1
+                associate_with_regression(OBJECTS_LIST, clustered_objs, buffer_size)
 
             show_image(frame_rgb, OBJECTS_LIST)
 
