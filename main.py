@@ -65,7 +65,6 @@ def run_detection_on_buffer(images):
 
     return objs_after_cluster
 
-
 #INIT global objects List
 global OBJECTS_LIST
 OBJECTS_LIST = []
@@ -105,3 +104,17 @@ if __name__ == '__main__':
         frame_num += 1
 
     cap.release()
+
+def createTestData:
+    x = []
+    y = []
+
+    for i in range(100):
+        m = np.random.uniform(-20, 20)
+        b = np.random.uniform(-20, 20)
+        noise_x = np.random.normal()
+        noise_y = np.random.normal()
+        x.add(np.random.uniform(0,100))
+        y.add(m * (x + noise_x) + (b + noise_y))
+    print("x || " + str(x))
+    print("y || " + str(y))
