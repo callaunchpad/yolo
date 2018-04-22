@@ -25,6 +25,8 @@ ap.add_argument("-v", "--video",
 	help="path to the (optional) video file")
 ap.add_argument("-b", "--buffer", type=int, default=32,
 	help="max buffer size")
+ap.add_argument("-g", "--gpu", type=float, default=0.0,
+	help="gpu usage")
 args = vars(ap.parse_args())
 
 IMAGE_WIDTH = 608
@@ -94,7 +96,9 @@ if __name__ == '__main__':
     frame_num = 0
     image_buffer = []
 
-    options = {"model": "../darkflow/cfg/yolo.cfg", "load": "../darkflow/bin/yolo.weights", "threshold": 0.5}
+    options = {"model": "cfg/yolo.cfg", "load": "weights/yolo.weights", "threshold": 0.5}
+    if args.get("video", False):
+        options.update({"gpu": args["gpu"]})
     tfnet = TFNet(options)
     while(cap.isOpened()):
         print("Video Frame ", frame_num)

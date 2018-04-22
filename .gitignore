@@ -6,4 +6,6 @@ YOLO_example/.ipynb_checkpoints/
 YOLO_example/out
 .DS_Store
 YOLO_example/.DS_Store
-videos/highway.mp4
+*.weights
+*.mp4
+*.MOV
