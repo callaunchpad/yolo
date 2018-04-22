@@ -8,7 +8,6 @@ from functools import total_ordering
 import math
 
 class BoundingBox:
-
     '''
     Constructor for taking an RCNN box variable.
     Assumes image shape is a tuple of form (width, height)
@@ -295,8 +294,6 @@ def associate_with_regression(global_objects, objects_cluster, buffer_size=1):
     global_objects.extend([obj for obj in objects_cluster if obj not in seen_cluster])
     #best_association = max(ious)
     #global_objects.append(best_association)
-
-
 
 
 def iou(box1, box2):
