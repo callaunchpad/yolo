@@ -23,7 +23,8 @@ IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
 FRAME_SKIP = 40
 FRAME_GAP = 1
-BUFFER_SIZE = 8
+INITIAL_BUFFER_SIZE = 12
+BUFFER_SIZE = 5
 
 '''
 CONSTANTS THAT NEED TO BE FILLED OUT
@@ -61,17 +62,14 @@ def run_detection_on_buffer(images):
     frames = [Frame(image, create_object_list(sess, image)) for image in images]
     objs_after_cluster = dbscan_type_split(frames)
     list_centroids(objs_after_cluster)
-    draw_objects_on_image(images[-1], objs_after_cluster, ind=-3)
 
-    #plt.imshow(images[-1])
-    #plt.show()
     return objs_after_cluster
 
 
 #INIT global objects List
 global OBJECTS_LIST
 OBJECTS_LIST = []
-
+buffer_size = INITIAL_BUFFER_SIZE
 #TODO Fill out actual main items
 if __name__ == '__main__':
     print("Running main")
@@ -90,12 +88,17 @@ if __name__ == '__main__':
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame_rgb = cv2.resize(frame_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT))
             image_buffer.append(frame_rgb)
-        if len(image_buffer) == BUFFER_SIZE:
+        if len(image_buffer) == buffer_size:
             print("pushing buffer")
             #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
             clustered_objs = run_detection_on_buffer(image_buffer)
             if len(OBJECTS_LIST) == 0:
                 OBJECTS_LIST = clustered_objs
+                buffer_size = BUFFER_SIZE
+            else:
+                associate_with_regression(OBJECTS_LIST, clustered_objs)
+
+            show_image(frame_rgb, OBJECTS_LIST)
 
             #EMPTY BUFFER
             image_buffer = []

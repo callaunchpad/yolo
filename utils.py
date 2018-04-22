@@ -4,9 +4,10 @@ from PIL import Image
 from visualization_utils import *
 from yolo_utils import read_classes, generate_colors
 import numpy as np
+from functools import total_ordering
+import math
 
 class BoundingBox:
-
 
     '''
     Constructor for taking an RCNN box variable.
@@ -62,6 +63,15 @@ class Object:
         self.prediction = None
 
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return (self.id == other.id) and (len(self.boxes) == len(other.boxes))
+        else:
+            return False
+
+    def __hash__(self):
+        return hash((self.id, self.classification, self.score))
+
     #Takes in bounding box object and score
     def add_box(self, bounding_box, score):
         self.boxes.append(bounding_box)
@@ -106,7 +116,7 @@ class Object:
 
         minpred = np.polyfit(xmin, ymin, degree)
         minpoly = np.poly1d(minpred)
-        maxpred = np.polyfit(xmin, ymin, degree)
+        maxpred = np.polyfit(xmax, ymax, degree)
         maxpoly = np.poly1d(maxpred)
 
         xmindisp = get_avg_displacement(xmin) * math.ceil(buffer_size/2)
@@ -117,8 +127,14 @@ class Object:
 
         ymin_point = minpoly(xmin_point)
         ymax_point = minpoly(xmax_point)
+
+        plt.plot(xmin, ymin, 'r')
+        plt.plot(xmax, ymax, 'b')
+        plt.show()
+
         box = [xmin_point, ymin_point, xmax_point, ymax_point]
         self.prediction = BoundingBox(box, self.classification)
+        return self.prediction
 
     #TODO: Fill in string method
     def __str__(self):
@@ -183,23 +199,80 @@ def draw_objects_on_image(image, objects_list, ind=-1) :
     for obj in objects_list:
         box = obj.get_box(ind).get_as_array()
         draw_bounding_box_on_image_array(image, box[1], box[0], box[3], box[2], use_normalized_coordinates=False)
+
+        pred = obj.prediction
+
+        if pred is not None:
+            predbox = pred.get_as_array()
+            draw_bounding_box_on_image_array(image, predbox[1], predbox[0], predbox[3], predbox[2], use_normalized_coordinates=False, color='blue')
+
         out_scores.append(obj.get_score(ind))
         out_boxes.append(box)
         out_classes.append(obj.classification)
+
+def show_image(image, objects_list, ind=-1):
+    draw_objects_on_image(image, objects_list, ind)
+    plt.imshow(image)
+    for obj in objects_list:
+        cent = obj.get_box(ind).get_centroid()
+        plt.text(cent[0], cent[1], "ID: " + str(obj.id))
+    plt.show()
+
+
+@total_ordering
+class Score:
+
+    def __init__(self, global_object, cluster_object):
+        self.global_object = global_object
+        self.cluster_object = cluster_object
+        self.iou_score = iou(global_object.predict_box(1), cluster_object.get_avg_bounding_box())
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.iou_score == other.iou_score
+        else:
+            return False
+
+    def __ne__(self, other):
+        if isinstance(other, self.__class__):
+            return not (self.iou_score == other.iou_score)
+        else:
+            return True
+
+    def __lt__(self, other):
+        if isinstance(other, self.__class__):
+            return self.iou_score < other.iou_score
+        else:
+            return True
 
 
 # runs predictions on global_objects
 # maximize iou btwn predictions and average cluster
 # add the best association to global_objects
 def associate_with_regression(global_objects, objects_cluster):
-    predictions = [obj.predict_box() for obj in global_objects]
-    averages = [obj.get_avg_bounding_box() for obj in objects_cluster]
-    ious = []
-    for pred in predictions :
-        for avg in averages:
-            ious.append(iou(pred, avg))
-    best_association = max(ious)
-    global_objects.append(best_association)
+    scores = []
+    print(global_objects)
+    for global_obj in global_objects:
+        for cluster_obj in objects_cluster:
+            scores.append(Score(global_obj, cluster_obj))
+
+    scores.sort()
+    seen_global = set()
+    seen_cluster = set()
+
+    while len(scores) > 0:
+        curr = scores.pop()
+        if (curr.global_object in seen_global) or (curr.cluster_object in seen_cluster):
+            continue
+        else:
+            if curr.iou_score > 0:
+                seen_global.add(curr.global_object)
+                seen_cluster.add(curr.cluster_object)
+                curr.global_object.combine_objects(curr.cluster_object)
+
+    global_objects.extend([obj for obj in objects_cluster if obj not in seen_cluster])
+    #best_association = max(ious)
+    #global_objects.append(best_association)
 
 
 def iou(box1, box2):
@@ -221,4 +294,5 @@ def get_avg_displacement(arr):
     front = arr[:-1]
     back = arr[1:]
     diff = back - front
+    print("DIFF ARRAY:" + str(diff))
     return np.mean(diff)

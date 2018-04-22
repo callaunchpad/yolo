@@ -17,7 +17,6 @@ def compile_joint_typeset(frames):
         typeset.extend(frame.class_dict.keys())
     return list(set(typeset))
 
-
 def dbscan_type_split(frames):
     types = compile_joint_typeset(frames)
     final_objects = []
