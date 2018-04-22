@@ -9,6 +9,7 @@ from keras import backend as K
 from keras.layers import Input, Lambda, Conv2D
 from keras.models import load_model, Model
 from yolo_utils import *
+from darkflow.net.build import TFNet
 
 from utils import *
 #from clustering import *
@@ -18,6 +19,13 @@ CWD_PATH = os.getcwd()
 
 #NUMWORKERS = 2
 FILENAME = 'videos/people.mp4'
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-v", "--video",
+	help="path to the (optional) video file")
+ap.add_argument("-b", "--buffer", type=int, default=32,
+	help="max buffer size")
+args = vars(ap.parse_args())
 
 IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
@@ -63,8 +71,8 @@ def run_detection_on_buffer(images):
     list_centroids(objs_after_cluster)
     draw_objects_on_image(images[-1], objs_after_cluster, ind=-3)
 
-    #plt.imshow(images[-1])
-    #plt.show()
+    plt.imshow(images[-1])
+    plt.show()
     return objs_after_cluster
 
 
@@ -76,29 +84,56 @@ OBJECTS_LIST = []
 if __name__ == '__main__':
     print("Running main")
 
-    cap = cv2.VideoCapture(FILENAME)
+    if not args.get("video", False):
+        cap = cv2.VideoCapture(0)
+
+    # otherwise, grab a reference to the video file
+    else:
+    	cap = cv2.VideoCapture(args["video"])
+    # cap = cv2.VideoCapture(FILENAME)
     frame_num = 0
     image_buffer = []
 
+    options = {"model": "../darkflow/cfg/yolo.cfg", "load": "../darkflow/bin/yolo.weights", "threshold": 0.5}
+    tfnet = TFNet(options)
     while(cap.isOpened()):
         print("Video Frame ", frame_num)
         ret, frame = cap.read()
         if frame is None:
             break
-        if frame_num > FRAME_SKIP and frame_num % FRAME_GAP == 0:
-            #add a frame to the current buffer
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame_rgb = cv2.resize(frame_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT))
-            image_buffer.append(frame_rgb)
-        if len(image_buffer) == BUFFER_SIZE:
-            print("pushing buffer")
-            #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
-            clustered_objs = run_detection_on_buffer(image_buffer)
-            if len(OBJECTS_LIST) == 0:
-                OBJECTS_LIST = clustered_objs
+        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # imgcv = cv2.imread(frame)
+        result = tfnet.return_predict(frame)
+        for label in result:
+            cv2.rectangle(frame,
+                  (label["topleft"]["x"], label["topleft"]["y"]),
+                  (label["bottomright"]["x"],
+                   label["bottomright"]["y"]),
+                  (0, 255, 0), 4)
+            text_x, text_y = label["topleft"][
+                "x"] - 10, label["topleft"]["y"] - 10
 
-            #EMPTY BUFFER
-            image_buffer = []
+            cv2.putText(frame, label["label"], (text_x, text_y),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+
+        cv2.imshow('frame', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        print(result)
+        # if frame_num > FRAME_SKIP and frame_num % FRAME_GAP == 0:
+        #     #add a frame to the current buffer
+        #     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        #     frame_rgb = cv2.resize(frame_rgb, (IMAGE_WIDTH, IMAGE_HEIGHT))
+        #     image_buffer.append(frame_rgb)
+        # if len(image_buffer) == BUFFER_SIZE:
+        #     print("pushing buffer")
+        #     #THIS IS WHERE WE DO STUFF WITH A FULL BUFFER
+        #     clustered_objs = run_detection_on_buffer(image_buffer)
+        #     if len(OBJECTS_LIST) == 0:
+        #         OBJECTS_LIST = clustered_objs
+        #
+        #     #EMPTY BUFFER
+        #     image_buffer = []
         frame_num += 1
 
     cap.release()
