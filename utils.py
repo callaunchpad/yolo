@@ -7,6 +7,12 @@ import numpy as np
 from functools import total_ordering
 import math
 
+###########
+# CONSTANTS
+##########
+DETECTION_GAP_THRESHOLD = 3
+
+
 class BoundingBox:
     '''
     Constructor for taking an RCNN box variable.
@@ -34,6 +40,9 @@ class BoundingBox:
 
     def get_as_array(self):
         return np.array([self.ymin, self.xmin, self.ymax, self.xmax])
+
+    def get_top_left_point(self):
+        return [self.xmin, self.ymin]
 
     #TODO: Fill in string method
     def __str__(self):
@@ -138,8 +147,8 @@ class Object:
 
         plt.plot(xmin, ymin, '-', color='orange')
         plt.plot(xmax, ymax, '-', color='purple')
-        plt.plot(xmin[0], ymin[0], 'o', color='green')
-        plt.plot(xmax[0], ymax[0], 'o', color='green')
+        plt.plot(xmin[0], ymin[0], 'o', color='green', ms=3)
+        plt.plot(xmax[0], ymax[0], 'o', color='green', ms=3)
 
         box = [ymin_point, xmin_point, ymax_point, xmax_point]
         self.prediction = BoundingBox(box, self.classification)
@@ -202,32 +211,41 @@ def list_centroids(objects):
     return printstr
 
 def draw_objects_on_image(image, objects_list, ind=-1) :
-    out_scores = []
-    out_boxes = []
-    out_classes = []
+    #out_scores = []
+    #out_boxes = []
+    #out_classes = []
     class_names = read_classes("YOLO_example/model_data/coco_classes.txt")
     colors = generate_colors(class_names)
 
     for obj in objects_list:
         box = obj.get_box(ind).get_as_array()
-        draw_bounding_box_on_image_array(image, box[0], box[1], box[2], box[3], use_normalized_coordinates=False)
 
         pred = obj.prediction
 
         if pred is not None:
             predbox = pred.get_as_array()
-            draw_bounding_box_on_image_array(image, predbox[0], predbox[1], predbox[2], predbox[3], use_normalized_coordinates=False, color='blue')
+            draw_bounding_box_on_image_array(image, predbox[0], predbox[1], predbox[2], predbox[3], use_normalized_coordinates=False, color='rgb(115, 200, 255)')
 
-        out_scores.append(obj.get_score(ind))
-        out_boxes.append(box)
-        out_classes.append(obj.classification)
+        draw_bounding_box_on_image_array(image, box[0], box[1], box[2], box[3], use_normalized_coordinates=False)
+        #out_scores.append(obj.get_score(ind))
+        #out_boxes.append(box)
+        #out_classes.append(obj.classification)
 
 def show_image(image, objects_list, ind=-1):
     draw_objects_on_image(image, objects_list, ind)
-    plt.imshow(image)
+    image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
+    draw = ImageDraw.Draw(image_pil)
+    fnt = ImageFont.truetype('Pillow/Tests/fonts/FreeMono.ttf', 24)
+
     for obj in objects_list:
-        cent = obj.get_box(ind).get_centroid()
-        plt.text(cent[0], cent[1], "ID: " + str(obj.id))
+        pt = obj.get_box(ind).get_top_left_point()
+        #plt.text(pt[0], pt[1], "ID: " + str(obj.id), style='italic',
+        #bbox={'facecolor':'red', 'alpha':0.5, 'pad':2})
+        draw.text((pt[0], pt[1]), "ID: " + str(obj.id), font=fnt, fill=(255,255,255,128))
+
+    np.copyto(image, np.array(image_pil))
+
+    plt.imshow(image)
     plt.show()
 
 
@@ -284,9 +302,8 @@ def associate_with_regression(global_objects, objects_cluster, buffer_size=1):
                 seen_cluster.add(curr.cluster_object)
                 curr.global_object.combine_objects(curr.cluster_object)
 
-    [print(obj.detection_gap) for obj in global_objects]
 
-    to_remove = [obj for obj in global_objects if obj.detection_gap >= 3]
+    to_remove = [obj for obj in global_objects if obj.detection_gap >= DETECTION_GAP_THRESHOLD]
 
     for obj in to_remove:
         global_objects.remove(obj)
