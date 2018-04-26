@@ -106,6 +106,8 @@ def createLinearTestData():
     print("m1 ", m1, '\t', "|| b1 ", b1)
     print("m2 ", m2, '\t', "|| b2 ", b2)
 
+    return y1, y2
+
     #plt.plot(x1, y1, '1', x2, y2, '2')
     #plt.show()
 
