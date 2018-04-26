@@ -67,6 +67,7 @@ def run_detection_on_buffer(images):
     return objs_after_cluster
 
 # creates data set for 2 lines
+# returns y1, y2 for x [0, 500)
 def createLinearTestData():
     x1 = []
     y1 = []
