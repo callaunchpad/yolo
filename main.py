@@ -148,6 +148,8 @@ if __name__ == '__main__':
     frame_num = 0
     image_buffer = []
 
+    out = cv2.VideoWriter('out' + FILENAME + '.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 6, (IMAGE_WIDTH,IMAGE_HEIGHT))
+
     while(cap.isOpened()):
         print("Video Frame ", frame_num)
         ret, frame = cap.read()
@@ -170,9 +172,11 @@ if __name__ == '__main__':
                 associate_with_regression(OBJECTS_LIST, clustered_objs, buffer_size)
 
             show_image(frame_rgb, OBJECTS_LIST)
+            out.write(frame_rgb)
 
             #EMPTY BUFFER
             image_buffer = []
         frame_num += 1
 
     cap.release()
+    out.release()
