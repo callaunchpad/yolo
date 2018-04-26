@@ -5,6 +5,7 @@ import argparse
 import multiprocessing
 import numpy as np
 import tensorflow as tf
+from matplotlib import pyplot as plt
 from keras import backend as K
 from keras.layers import Input, Lambda, Conv2D
 from keras.models import load_model, Model
@@ -64,40 +65,6 @@ def run_detection_on_buffer(images):
     #list_centroids(objs_after_cluster)
 
     return objs_after_cluster
-
-
-def createTestData():
-    x1 = []
-    y1 = []
-
-    x2 = []
-    y2 = []
-
-    for i in range(100):
-        # first corner's line
-        m1 = np.random.uniform(-20, 20)
-        b1 = np.random.uniform(-20, 20)
-        noise_x1 = np.random.normal()
-        noise_y1 = np.random.normal()
-        x1.add(np.random.uniform(0,100))
-        y1.add(m1 * (x1[-1] + noise_x1) + (b1 + noise_y1))
-
-        # second corner's line
-        m2 = np.random.normal(m1, .5)
-        b2 = np.np.random.uniform(-20, 20)
-        height = abs(b2 - b1)
-        noise_x2 = np.random.normal(0, 0.1 * height)
-        noise_y2 = np.random.normal(0, 0.1 * height)
-        x2.add(np.random.uniform(0,100))
-        y2.add(m2 * (x2[-1] + noise_x2) + (b2 + noise_y2))
-
-
-    print("x1 || " + str(x1))
-    print("y1 || " + str(y1))
-
-    print("x2 || " + str(x2))
-    print("y2 || " + str(y2))
-
 
 #INIT global objects List
 global OBJECTS_LIST
