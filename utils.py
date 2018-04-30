@@ -235,12 +235,12 @@ def show_image(image, objects_list, ind=-1):
     draw_objects_on_image(image, objects_list, ind)
     image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
     draw = ImageDraw.Draw(image_pil)
-    fnt = ImageFont.truetype('Pillow/Tests/fonts/FreeMono.ttf', 24)
+    fnt = ImageFont.truetype('FreeMono.ttf', 24)
 
     for obj in objects_list:
         pt = obj.get_box(ind).get_top_left_point()
-        #plt.text(pt[0], pt[1], "ID: " + str(obj.id), style='italic',
-        #bbox={'facecolor':'red', 'alpha':0.5, 'pad':2})
+        plt.text(pt[0], pt[1], "ID: " + str(obj.id), style='italic',
+        bbox={'facecolor':'red', 'alpha':0.5, 'pad':2})
         draw.text((pt[0], pt[1]), "ID: " + str(obj.id), font=fnt, fill=(255,255,255,128))
 
     np.copyto(image, np.array(image_pil))
