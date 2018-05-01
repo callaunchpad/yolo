@@ -7,3 +7,4 @@ YOLO_example/out
 .DS_Store
 YOLO_example/.DS_Store
 videos/highway.mp4
+.idea/
