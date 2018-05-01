@@ -10,6 +10,7 @@ from keras import backend as K
 from keras.layers import Input, Lambda, Conv2D
 from keras.models import load_model, Model
 from yolo_utils import *
+import re
 
 from utils import *
 #from clustering import *
@@ -22,7 +23,7 @@ FILENAME = 'videos/people.mp4'
 
 IMAGE_WIDTH = 608
 IMAGE_HEIGHT = 608
-FRAME_SKIP = 40
+FRAME_SKIP = 20
 FRAME_GAP = 1
 INITIAL_BUFFER_SIZE = 12
 BUFFER_SIZE = 5
@@ -78,7 +79,9 @@ if __name__ == '__main__':
     frame_num = 0
     image_buffer = []
 
-    out = cv2.VideoWriter('out' + FILENAME + '.avi', cv2.VideoWriter_fourcc('M','J','P','G'), 6, (IMAGE_WIDTH,IMAGE_HEIGHT))
+    out_name = re.split('/|[.]', FILENAME)[-2] # last item is the extention, second to last is file name
+
+    out = cv2.VideoWriter('out-' + out_name + '.avi', cv2.VideoWriter_fourcc('M','J','P','G'), 15, (IMAGE_WIDTH,IMAGE_HEIGHT))
 
     while(cap.isOpened()):
         print("Video Frame ", frame_num)
@@ -102,7 +105,7 @@ if __name__ == '__main__':
                 associate_with_regression(OBJECTS_LIST, clustered_objs, buffer_size)
 
             show_image(frame_rgb, OBJECTS_LIST)
-            cv2.imwrite('file.jpg', frame_rgb)
+            # cv2.imwrite('file.jpg', frame_rgb)
             out.write(frame_rgb)
 
             #EMPTY BUFFER
