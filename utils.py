@@ -149,10 +149,10 @@ class Object:
         # ymin_point = minpoly(xmin_point)
         # ymax_point = maxpoly(xmax_point)
         #
-        # plt.plot(xmin, ymin, '-', color='orange')
-        # plt.plot(xmax, ymax, '-', color='purple')
-        # plt.plot(xmin[0], ymin[0], 'o', color='green', ms=3)
-        # plt.plot(xmax[0], ymax[0], 'o', color='green', ms=3)
+        plt.plot(xmin, ymin, '-', color='orange')
+        plt.plot(xmax, ymax, '-', color='purple')
+        plt.plot(xmin[0], ymin[0], 'o', color='green', ms=3)
+        plt.plot(xmax[0], ymax[0], 'o', color='green', ms=3)
 
         ymin_point, xmin_point, ymax_point, xmax_point = rnn_predict(xmin, ymin, xmax, ymax)
 

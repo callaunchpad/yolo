@@ -17,9 +17,11 @@ prediction_model = model_from_json(loaded_model_json)
 prediction_model.load_weights("ObjectPrediction/predictor_weights.h5")
 print("Loaded model from disk")
 
+__DATA_WINDOW__ = 5
+
 def rnn_predict(x1pts, y1pts, x2pts, y2pts):
-    corner1 = zip(x1pts, y1pts)
-    corner2 = zip(x2pts, y2pts)
+    corner1 = zip(x1pts[:__DATA_WINDOW__], y1pts[:__DATA_WINDOW__])
+    corner2 = zip(x2pts[:__DATA_WINDOW__], y2pts[:__DATA_WINDOW__])
 
     hashed1 = []
     hashed2 = []
@@ -60,6 +62,7 @@ def rnn_predict(x1pts, y1pts, x2pts, y2pts):
 
 def hashCoords(x, y):
     return (y*1000 + x)/(608608)
+
 
 def reverseHash(code):
     x = (code*608608)%1000
