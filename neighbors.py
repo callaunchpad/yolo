@@ -3,7 +3,9 @@ from utils import *
 import math
 from sklearn.cluster import DBSCAN
 
-EPS = 80
+#GOOOD ESTIMATE IS 0.04 times IMAGE WIDTH
+
+EPS = 120
 
 #UTILITY FUNCTIONS
 def get_obj_arr_type(frames, type_class):

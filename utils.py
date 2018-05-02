@@ -10,7 +10,7 @@ import math
 ###########
 # CONSTANTS
 ##########
-DETECTION_GAP_THRESHOLD = 3
+DETECTION_GAP_THRESHOLD = 1
 
 
 class BoundingBox:
@@ -206,7 +206,7 @@ def list_centroids(objects):
     for obj in objects:
         for box in obj.boxes:
             printstr = printstr + " " + str(box.get_centroid())
-        print("Object " + str(index) + " " + str(obj.classification) + ":  " + printstr)
+        print("Object " + str(obj.id) + " " + str(obj.classification) + ":  " + printstr)
         index += 1
     return printstr
 
@@ -219,7 +219,6 @@ def draw_objects_on_image(image, objects_list, ind=-1) :
 
     for obj in objects_list:
         box = obj.get_box(ind).get_as_array()
-
         pred = obj.prediction
 
         if pred is not None:
@@ -252,6 +251,23 @@ def show_image(image, objects_list, ind=-1):
             display_str,
             fill='white',
             font=font)
+
+    for obj in objects_list:
+        if obj.prediction is not None:
+            pt = obj.prediction.get_top_left_point()
+            display_str = "ID: " + str(obj.id)
+            text_width, text_height = font.getsize(display_str)
+            margin = np.ceil(0.05 * text_height)
+            text_bottom = pt[1]
+            left = pt[0]
+            draw.rectangle(
+                [(left, text_bottom), (left + text_width, text_bottom + text_height + 2 * margin)],
+                fill='blue')
+            draw.text(
+                (left + margin, text_bottom + margin),
+                display_str,
+                fill='white',
+                font=font)
 
         #draw.text((pt[0], pt[1]), "ID: " + str(obj.id), font=font, fill=(255,255,255,128))
 
@@ -306,6 +322,8 @@ def associate_with_regression(global_objects, objects_cluster, buffer_size=1):
 
     while len(scores) > 0:
         curr = scores.pop()
+        if curr.iou_score < 0:
+            break
         if (curr.global_object in seen_global) or (curr.cluster_object in seen_cluster):
             continue
         else:
@@ -328,7 +346,6 @@ def associate_with_regression(global_objects, objects_cluster, buffer_size=1):
 def iou(box1, box2):
     area1 = box1.get_area()
     area2 = box2.get_area()
-
     xi1 = max(box1.xmin, box2.xmin)
     yi1 = max(box1.ymin, box2.ymin)
     xi2 = min(box1.xmax, box2.xmax)

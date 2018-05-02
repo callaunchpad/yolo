@@ -20,7 +20,7 @@ from neighbors import *
 CWD_PATH = os.getcwd()
 
 #NUMWORKERS = 2
-FILENAME = 'videos/people.mp4'
+FILENAME = 'videos/road.mp4'
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video",
 	help="path to the (optional) video file")
@@ -35,8 +35,8 @@ IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
 FRAME_SKIP = 0
 FRAME_GAP = 1
-INITIAL_BUFFER_SIZE = 12
-BUFFER_SIZE = 5
+INITIAL_BUFFER_SIZE = 6
+BUFFER_SIZE = 6
 
 '''
 CONSTANTS THAT NEED TO BE FILLED OUT
@@ -66,12 +66,16 @@ def create_object_list(image):
 	# out_boxes = box
 
 	#print('Found {} boxes '.format(len(out_boxes)))
-
+	print("Found " + str(len(result)) + " objects")
 	for i in range(len(result)):
 		#print("Detected Object: " + str(out_classes[i]) + " " + str(out_boxes[i]) + " "+ str(out_scores[i]))
 		box = [result[i].get("topleft").get("y"), result[i].get("topleft").get("x"), result[i].get("bottomright").get("y"), result[i].get("bottomright").get("x")]
 		new_obj = Object(result[i].get("label"), box, result[i].get("confidence"))
 		objects_list.append(new_obj)
+
+	draw_objects_on_image(image, objects_list)
+	#plt.imshow(image)
+	#plt.show()
 
 	return objects_list
 
@@ -79,7 +83,7 @@ def run_detection_on_buffer(images):
 	print("Detecting for buffer")
 	frames = [Frame(image, create_object_list(image)) for image in images]
 	objs_after_cluster = dbscan_type_split(frames)
-	#list_centroids(objs_after_cluster)
+	list_centroids(objs_after_cluster)
 	return objs_after_cluster
 
 #INIT global objects List
@@ -94,9 +98,9 @@ if __name__ == '__main__':
 	frame_num = 0
 	image_buffer = []
 
-	out_name = re.split('/|[.]', FILENAME)[-2] # last item is the extention, second to last is file name
+	out_name = str(IMAGE_WIDTH) + re.split('/|[.]', FILENAME)[-2] # last item is the extention, second to last is file name
 
-	out = cv2.VideoWriter('out-' + out_name + '.avi', cv2.VideoWriter_fourcc('M','J','P','G'), 15, (IMAGE_WIDTH,IMAGE_HEIGHT))
+	out = cv2.VideoWriter('out-' + out_name + '.avi', cv2.VideoWriter_fourcc('M','J','P','G'), 10, (IMAGE_WIDTH,IMAGE_HEIGHT))
 	options = {"model": "cfg/yolo.cfg", "load": "yolo.weights", "threshold": 0.5}
 	if args.get("video", False):
 		options.update({"gpu": args["gpu"]})
@@ -120,9 +124,9 @@ if __name__ == '__main__':
 				OBJECTS_LIST = clustered_objs
 				buffer_size = BUFFER_SIZE
 			else:
-				#BUFFER SIZE IS LAST PARAM SET TO 1
 				associate_with_regression(OBJECTS_LIST, clustered_objs, buffer_size)
 
+			frame_rgb = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
 			show_image(frame_rgb, OBJECTS_LIST)
 			# cv2.imwrite('file.jpg', frame_rgb)
 			out.write(frame_rgb)
