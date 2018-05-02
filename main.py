@@ -83,7 +83,7 @@ def run_detection_on_buffer(images):
 	print("Detecting for buffer")
 	frames = [Frame(image, create_object_list(image)) for image in images]
 	objs_after_cluster = dbscan_type_split(frames)
-	list_centroids(objs_after_cluster)
+	#list_centroids(objs_after_cluster)
 	return objs_after_cluster
 
 #INIT global objects List
@@ -126,6 +126,7 @@ if __name__ == '__main__':
 			else:
 				associate_with_regression(OBJECTS_LIST, clustered_objs, buffer_size)
 
+			list_centroids(OBJECTS_LIST)
 			frame_rgb = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
 			show_image(frame_rgb, OBJECTS_LIST)
 			# cv2.imwrite('file.jpg', frame_rgb)

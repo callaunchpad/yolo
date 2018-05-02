@@ -10,7 +10,7 @@ import math
 ###########
 # CONSTANTS
 ##########
-DETECTION_GAP_THRESHOLD = 1
+DETECTION_GAP_THRESHOLD = 2
 
 
 class BoundingBox:
@@ -131,13 +131,13 @@ class Object:
         minpoly = np.poly1d(minpred)
         maxpred = np.polyfit(xmax, ymax, degree)
         maxpoly = np.poly1d(maxpred)
-        print("MIN POLY" + str(minpred))
-        print("MAX POLY" + str(maxpred))
+        #print("MIN POLY" + str(minpred))
+        #print("MAX POLY" + str(maxpred))
 
         xmindisp = get_avg_displacement(xmin) * math.ceil(buffer_size/2)
         xmaxdisp = get_avg_displacement(xmax) * math.ceil(buffer_size/2)
-        print("XIMDISP: " + str(xmindisp))
-        print("XMAXDISP: " + str(xmaxdisp))
+        #print("XIMDISP: " + str(xmindisp))
+        #print("XMAXDISP: " + str(xmaxdisp))
 
         xmin_point = xmin[-1] + xmindisp
         xmax_point = xmax[-1] + xmaxdisp
@@ -202,13 +202,12 @@ class Frame:
 
 def list_centroids(objects):
     index = 1
-    printstr = ""
     for obj in objects:
+        printstr = ""
         for box in obj.boxes:
             printstr = printstr + " " + str(box.get_centroid())
         print("Object " + str(obj.id) + " " + str(obj.classification) + ":  " + printstr)
         index += 1
-    return printstr
 
 def draw_objects_on_image(image, objects_list, ind=-1) :
     #out_scores = []
@@ -330,6 +329,7 @@ def associate_with_regression(global_objects, objects_cluster, buffer_size=1):
             if curr.iou_score > 0.2:
                 seen_global.add(curr.global_object)
                 seen_cluster.add(curr.cluster_object)
+                print("Associating! IOU: " + str(curr.iou_score) + "for global obj " + str(curr.global_object.id))
                 curr.global_object.combine_objects(curr.cluster_object)
 
 
@@ -350,9 +350,13 @@ def iou(box1, box2):
     yi1 = max(box1.ymin, box2.ymin)
     xi2 = min(box1.xmax, box2.xmax)
     yi2 = min(box1.ymax, box2.ymax)
+    if (yi2 - yi1) < 0 or (xi2 - xi1) < 0:
+        return -1
     inter_area = (xi2 - xi1) * (yi2 - yi1)
-
+    #print("inter_area " + str(inter_area))
     union_area = area1 + area2 - inter_area
+    #print("union_area " + str(union_area))
+
     iou = inter_area / union_area
 
     return iou
