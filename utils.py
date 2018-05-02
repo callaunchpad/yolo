@@ -7,6 +7,8 @@ import numpy as np
 from functools import total_ordering
 import math
 
+from ObjectPrediction.rnn_predict import rnn_predict
+
 from keras.models import model_from_json
 
 ###########
@@ -129,28 +131,30 @@ class Object:
         ymax = data[2]
         xmax = data[3]
 
-        minpred = np.polyfit(xmin, ymin, degree)
-        minpoly = np.poly1d(minpred)
-        maxpred = np.polyfit(xmax, ymax, degree)
-        maxpoly = np.poly1d(maxpred)
-        print("MIN POLY" + str(minpred))
-        print("MAX POLY" + str(maxpred))
+        # minpred = np.polyfit(xmin, ymin, degree)
+        # minpoly = np.poly1d(minpred)
+        # maxpred = np.polyfit(xmax, ymax, degree)
+        # maxpoly = np.poly1d(maxpred)
+        # print("MIN POLY" + str(minpred))
+        # print("MAX POLY" + str(maxpred))
+        #
+        # xmindisp = get_avg_displacement(xmin) * math.ceil(buffer_size/2)
+        # xmaxdisp = get_avg_displacement(xmax) * math.ceil(buffer_size/2)
+        # print("XIMDISP: " + str(xmindisp))
+        # print("XMAXDISP: " + str(xmaxdisp))
+        #
+        # xmin_point = xmin[-1] + xmindisp
+        # xmax_point = xmax[-1] + xmaxdisp
+        #
+        # ymin_point = minpoly(xmin_point)
+        # ymax_point = maxpoly(xmax_point)
+        #
+        # plt.plot(xmin, ymin, '-', color='orange')
+        # plt.plot(xmax, ymax, '-', color='purple')
+        # plt.plot(xmin[0], ymin[0], 'o', color='green', ms=3)
+        # plt.plot(xmax[0], ymax[0], 'o', color='green', ms=3)
 
-        xmindisp = get_avg_displacement(xmin) * math.ceil(buffer_size/2)
-        xmaxdisp = get_avg_displacement(xmax) * math.ceil(buffer_size/2)
-        print("XIMDISP: " + str(xmindisp))
-        print("XMAXDISP: " + str(xmaxdisp))
-
-        xmin_point = xmin[-1] + xmindisp
-        xmax_point = xmax[-1] + xmaxdisp
-
-        ymin_point = minpoly(xmin_point)
-        ymax_point = maxpoly(xmax_point)
-
-        plt.plot(xmin, ymin, '-', color='orange')
-        plt.plot(xmax, ymax, '-', color='purple')
-        plt.plot(xmin[0], ymin[0], 'o', color='green', ms=3)
-        plt.plot(xmax[0], ymax[0], 'o', color='green', ms=3)
+        ymin_point, xmin_point, ymax_point, xmax_point = rnn_predict(xmin, ymin, xmax, ymax)
 
         box = [ymin_point, xmin_point, ymax_point, xmax_point]
         self.prediction = BoundingBox(box, self.classification)
@@ -259,8 +263,8 @@ def show_image(image, objects_list, ind=-1):
 
     np.copyto(image, np.array(image_pil))
 
-    # plt.imshow(image)
-    # plt.show()
+    plt.imshow(image)
+    plt.show()
 
 
 @total_ordering

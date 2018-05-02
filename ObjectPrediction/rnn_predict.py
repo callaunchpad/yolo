@@ -43,13 +43,16 @@ def rnn_predict(x1pts, y1pts, x2pts, y2pts):
 
     # testX, testY = create_dataset(testSet, look_back)
     # testX = np.reshape(testX, (testX.shape[0], 2, testX.shape[1]))
-    prediction = prediction_model.predict(np.array([(testSet.T)])[:,:,-5:])[0].T
-    (y1new, x1new), (y2new, x2new) = reverseHash(prediction[0]), reverseHash(prediction[1])
-    # print(prediction)
-    # y1new *= -1
-    # y2new *= -1
-    # print(y1new)
-    return x1new, y1new, x2new, y2new
+    testSet, _ = create_dataset(testSet, look_back=5)
+    if len(testSet) == 0:
+        x1new, y1new, x2new, y2new = x1pts[-1], y1pts[-1], x2pts[-1], y2pts[-1]
+    else:
+        testSet = np.reshape(testSet, (testSet.shape[0], 2, testSet.shape[1]))
+
+        prediction = prediction_model.predict(testSet)[-1]
+        (x1new, y1new), (x2new, y2new) = reverseHash(prediction[1]), reverseHash(prediction[0])
+
+    return y1new, x1new, y2new, x2new
     # loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
     # score = loaded_model.evaluate(testX, testY, verbose=0)
     # print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1] * 100))
