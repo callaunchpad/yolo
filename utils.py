@@ -245,8 +245,8 @@ def show_image(image, objects_list, ind=-1):
 
     np.copyto(image, np.array(image_pil))
 
-    # plt.imshow(image)
-    # plt.show()
+    plt.imshow(image)
+    plt.show()
 
 
 @total_ordering
