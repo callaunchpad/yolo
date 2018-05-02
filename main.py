@@ -33,7 +33,7 @@ args = vars(ap.parse_args())
 
 IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
-FRAME_SKIP = 40
+FRAME_SKIP = 0
 FRAME_GAP = 1
 INITIAL_BUFFER_SIZE = 12
 BUFFER_SIZE = 5
@@ -46,15 +46,13 @@ CONSTANTS THAT NEED TO BE FILLED OUT
 #ANCHORS = read_anchors("YOLO_example/model_data/yolo_anchors.txt")
 #print("read anchors")
 #YOLO_MODEL = load_model("YOLO_example/model_data/yolo.h5")
-print("loaded model")
-sess = K.get_session()
 
 image_shape = (float(IMAGE_HEIGHT), float(IMAGE_WIDTH))
 
 #yolo_outputs = yolo_head(YOLO_MODEL.output, ANCHORS, len(CLASS_NAMES))
 #scores, boxes, classes = yolo_eval(yolo_outputs, image_shape)
 
-def create_object_list(sess, image):
+def create_object_list(image):
 	objects_list = []
 	#image_data = np.array(image, dtype='float32')
 	#image_data /= 255.
@@ -79,10 +77,9 @@ def create_object_list(sess, image):
 
 def run_detection_on_buffer(images):
 	print("Detecting for buffer")
-	frames = [Frame(image, create_object_list(sess, image)) for image in images]
+	frames = [Frame(image, create_object_list(image)) for image in images]
 	objs_after_cluster = dbscan_type_split(frames)
 	#list_centroids(objs_after_cluster)
-
 	return objs_after_cluster
 
 #INIT global objects List

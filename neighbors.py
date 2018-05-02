@@ -3,6 +3,7 @@ from utils import *
 import math
 from sklearn.cluster import DBSCAN
 
+EPS = 80
 
 #UTILITY FUNCTIONS
 def get_obj_arr_type(frames, type_class):
@@ -29,7 +30,7 @@ def dbscan_type_split(frames):
 #need to determine of object type is the same
 def dbscan_objs(objects):
     centroids = np.array([obj.get_init_centroid() for obj in objects])
-    dbscan_approx = DBSCAN(eps=80).fit_predict(centroids)
+    dbscan_approx = DBSCAN(eps=EPS).fit_predict(centroids)
     dbset = set(dbscan_approx)
     if -1 in dbset:
         dbscanlen = len(dbset) - 1
