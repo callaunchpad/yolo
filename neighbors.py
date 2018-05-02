@@ -29,7 +29,7 @@ def dbscan_type_split(frames):
 #need to determine of object type is the same
 def dbscan_objs(objects):
     centroids = np.array([obj.get_init_centroid() for obj in objects])
-    dbscan_approx = DBSCAN(eps=60).fit_predict(centroids)
+    dbscan_approx = DBSCAN(eps=80).fit_predict(centroids)
     dbset = set(dbscan_approx)
     if -1 in dbset:
         dbscanlen = len(dbset) - 1
