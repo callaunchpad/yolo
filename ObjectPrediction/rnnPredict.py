@@ -21,13 +21,32 @@ def predict(x1pts, y1pts, x2pts, y2pts):
     corner1 = zip(x1pts, y1pts)
     corner2 = zip(x2pts, y2pts)
 
+    hashed1 = []
+    hashed2 = []
+
+    for (x, y) in corner1:
+        hashed = hashCoords(x, y)
+        hashed1.append(hashed)
+
+    for (x, y) in corner2:
+        hashed = hashCoords(x, y)
+        hashed2.append(hashed)
+
+    curve1 = np.array(hashed1)
+    curve2 = np.array(hashed2)
+
+    curve1 = curve1.reshape(curve1.shape[0], 1)
+    curve2 = curve2.reshape(curve2.shape[0], 1)
+
+    testSet = np.hstack((curve1, curve2))
+    look_back = 5
+
+    testX, testY = create_dataset(testSet, look_back)
+    testX = np.reshape(testX, (testX.shape[0], 2, testX.shape[1]))
 
     loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-    score = loaded_model.evaluate(X, Y, verbose=0)
+    score = loaded_model.evaluate(testX, testY, verbose=0)
     print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1] * 100))
-
-
-
 
 
 def hashCoords(x, y):
