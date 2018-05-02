@@ -5,6 +5,7 @@ import argparse
 import multiprocessing
 import numpy as np
 import tensorflow as tf
+from matplotlib import pyplot as plt
 from keras import backend as K
 from keras.layers import Input, Lambda, Conv2D
 from keras.models import load_model, Model
@@ -29,8 +30,8 @@ ap.add_argument("-g", "--gpu", type=float, default=0.0,
 args = vars(ap.parse_args())
 
 
-IMAGE_WIDTH = 608
-IMAGE_HEIGHT = 608
+IMAGE_WIDTH = 1920
+IMAGE_HEIGHT = 1080
 FRAME_SKIP = 40
 FRAME_GAP = 1
 INITIAL_BUFFER_SIZE = 12
@@ -91,30 +92,10 @@ def createTestData():
 	x2 = []
 	y2 = []
 
-	for i in range(100):
-		# first corner's line
-		m1 = np.random.uniform(-20, 20)
-		b1 = np.random.uniform(-20, 20)
-		noise_x1 = np.random.normal()
-		noise_y1 = np.random.normal()
-		x1.add(np.random.uniform(0,100))
-		y1.add(m1 * (x1[-1] + noise_x1) + (b1 + noise_y1))
-
-		# second corner's line
-		m2 = np.random.normal(m1, .5)
-		b2 = np.np.random.uniform(-20, 20)
-		height = abs(b2 - b1)
-		noise_x2 = np.random.normal(0, 0.1 * height)
-		noise_y2 = np.random.normal(0, 0.1 * height)
-		x2.add(np.random.uniform(0,100))
-		y2.add(m2 * (x2[-1] + noise_x2) + (b2 + noise_y2))
 
 
-	print("x1 || " + str(x1))
-	print("y1 || " + str(y1))
+	return y1, y2
 
-	print("x2 || " + str(x2))
-	print("y2 || " + str(y2))
 
 
 #INIT global objects List
@@ -128,10 +109,14 @@ if __name__ == '__main__':
 	cap = cv2.VideoCapture(FILENAME)
 	frame_num = 0
 	image_buffer = []
+
+	out = cv2.VideoWriter('out' + FILENAME + '.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 6, (IMAGE_WIDTH,IMAGE_HEIGHT))
+
 	options = {"model": "cfg/yolo.cfg", "load": "yolo.weights", "threshold": 0.5}
 	if args.get("video", False):
 		options.update({"gpu": args["gpu"]})
 	tfnet = TFNet(options)
+
 	while(cap.isOpened()):
 		print("Video Frame ", frame_num)
 		ret, frame = cap.read()
@@ -154,9 +139,11 @@ if __name__ == '__main__':
 				associate_with_regression(OBJECTS_LIST, clustered_objs, buffer_size)
 
 			show_image(frame_rgb, OBJECTS_LIST)
+			out.write(frame_rgb)
 
 			#EMPTY BUFFER
 			image_buffer = []
 		frame_num += 1
 
 	cap.release()
+	out.release()
