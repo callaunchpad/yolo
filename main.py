@@ -11,6 +11,7 @@ from keras.layers import Input, Lambda, Conv2D
 from keras.models import load_model, Model
 from yolo_utils import *
 from darkflow.net.build import TFNet
+import re
 
 from utils import *
 #from clustering import *
@@ -85,17 +86,6 @@ def run_detection_on_buffer(images):
 	return objs_after_cluster
 
 
-def createTestData():
-	x1 = []
-	y1 = []
-
-	x2 = []
-	y2 = []
-
-
-
-	return y1, y2
-
 
 
 #INIT global objects List
@@ -110,8 +100,9 @@ if __name__ == '__main__':
 	frame_num = 0
 	image_buffer = []
 
-	out = cv2.VideoWriter('out' + FILENAME + '.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 6, (IMAGE_WIDTH,IMAGE_HEIGHT))
+	out_name = re.split('/|[.]', FILENAME)[-2] # last item is the extention, second to last is file name
 
+	out = cv2.VideoWriter('out-' + out_name + '.avi', cv2.VideoWriter_fourcc('M','J','P','G'), 15, (IMAGE_WIDTH,IMAGE_HEIGHT))
 	options = {"model": "cfg/yolo.cfg", "load": "yolo.weights", "threshold": 0.5}
 	if args.get("video", False):
 		options.update({"gpu": args["gpu"]})
@@ -139,6 +130,7 @@ if __name__ == '__main__':
 				associate_with_regression(OBJECTS_LIST, clustered_objs, buffer_size)
 
 			show_image(frame_rgb, OBJECTS_LIST)
+			# cv2.imwrite('file.jpg', frame_rgb)
 			out.write(frame_rgb)
 
 			#EMPTY BUFFER
