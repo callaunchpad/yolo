@@ -41,18 +41,18 @@ BUFFER_SIZE = 5
 '''
 CONSTANTS THAT NEED TO BE FILLED OUT
 '''
-CLASS_NAMES = read_classes("YOLO_example/model_data/coco_classes.txt")
-print("read classes")
-ANCHORS = read_anchors("YOLO_example/model_data/yolo_anchors.txt")
-print("read anchors")
-YOLO_MODEL = load_model("YOLO_example/model_data/yolo.h5")
+#CLASS_NAMES = read_classes("YOLO_example/model_data/coco_classes.txt")
+#print("read classes")
+#ANCHORS = read_anchors("YOLO_example/model_data/yolo_anchors.txt")
+#print("read anchors")
+#YOLO_MODEL = load_model("YOLO_example/model_data/yolo.h5")
 print("loaded model")
 sess = K.get_session()
 
 image_shape = (float(IMAGE_HEIGHT), float(IMAGE_WIDTH))
 
-yolo_outputs = yolo_head(YOLO_MODEL.output, ANCHORS, len(CLASS_NAMES))
-scores, boxes, classes = yolo_eval(yolo_outputs, image_shape)
+#yolo_outputs = yolo_head(YOLO_MODEL.output, ANCHORS, len(CLASS_NAMES))
+#scores, boxes, classes = yolo_eval(yolo_outputs, image_shape)
 
 def create_object_list(sess, image):
 	objects_list = []

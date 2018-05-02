@@ -235,7 +235,7 @@ def show_image(image, objects_list, ind=-1):
     draw_objects_on_image(image, objects_list, ind)
     image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
     draw = ImageDraw.Draw(image_pil)
-    font = ImageFont.truetype('Helvetica.ttf', 12)
+    font = ImageFont.truetype('Helvetica.ttf', 30)
 
     for obj in objects_list:
         pt = obj.get_box(ind).get_top_left_point()
@@ -257,8 +257,8 @@ def show_image(image, objects_list, ind=-1):
 
     np.copyto(image, np.array(image_pil))
 
-    plt.imshow(image)
-    plt.show()
+    #plt.imshow(image)
+    #plt.show()
 
 
 @total_ordering
