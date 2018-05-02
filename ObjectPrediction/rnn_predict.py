@@ -9,15 +9,15 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 import random
 
-json_file = open('predictor.json', 'r')
+json_file = open('ObjectPrediction/predictor.json', 'r')
 loaded_model_json = json_file.read()
 json_file.close()
-loaded_model = model_from_json(loaded_model_json)
+prediction_model = model_from_json(loaded_model_json)
 # load weights into new model
-loaded_model.load_weights("predictor_weights.h5")
+prediction_model.load_weights("ObjectPrediction/predictor_weights.h5")
 print("Loaded model from disk")
 
-def predict(x1pts, y1pts, x2pts, y2pts):
+def rnn_predict(x1pts, y1pts, x2pts, y2pts):
     corner1 = zip(x1pts, y1pts)
     corner2 = zip(x2pts, y2pts)
 
@@ -41,12 +41,18 @@ def predict(x1pts, y1pts, x2pts, y2pts):
     testSet = np.hstack((curve1, curve2))
     look_back = 5
 
-    testX, testY = create_dataset(testSet, look_back)
-    testX = np.reshape(testX, (testX.shape[0], 2, testX.shape[1]))
-
-    loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-    score = loaded_model.evaluate(testX, testY, verbose=0)
-    print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1] * 100))
+    # testX, testY = create_dataset(testSet, look_back)
+    # testX = np.reshape(testX, (testX.shape[0], 2, testX.shape[1]))
+    prediction = prediction_model.predict(np.array([(testSet.T)])[:,:,-5:])[0].T
+    (y1new, x1new), (y2new, x2new) = reverseHash(prediction[0]), reverseHash(prediction[1])
+    # print(prediction)
+    # y1new *= -1
+    # y2new *= -1
+    # print(y1new)
+    return x1new, y1new, x2new, y2new
+    # loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+    # score = loaded_model.evaluate(testX, testY, verbose=0)
+    # print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1] * 100))
 
 
 def hashCoords(x, y):
