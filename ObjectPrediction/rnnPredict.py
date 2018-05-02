@@ -2,15 +2,29 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas
 import math
-from keras.models import Sequential
+from keras.models import Sequential, model_from_json
 from keras.layers import Dense
 from keras.layers import LSTM
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 import random
 
-def predict(x1pts, ):
+json_file = open('predictor.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+loaded_model = model_from_json(loaded_model_json)
+# load weights into new model
+loaded_model.load_weights("predictor_weights.h5")
+print("Loaded model from disk")
 
+def predict(x1pts, y1pts, x2pts, y2pts):
+    corner1 = zip(x1pts, y1pts)
+    corner2 = zip(x2pts, y2pts)
+
+
+    loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+    score = loaded_model.evaluate(X, Y, verbose=0)
+    print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1] * 100))
 
 
 

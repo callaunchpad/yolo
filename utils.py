@@ -15,15 +15,6 @@ from keras.models import model_from_json
 DETECTION_GAP_THRESHOLD = 3
 
 
-# load json and create model
-json_file = open('ObjectPrediction/predictor.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-loaded_model = model_from_json(loaded_model_json)
-# load weights into new model
-loaded_model.load_weights("ObjectPrediction/predictor_weights.h5")
-print("Loaded model from disk")
-
 class BoundingBox:
     '''
     Constructor for taking an RCNN box variable.
