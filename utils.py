@@ -7,11 +7,22 @@ import numpy as np
 from functools import total_ordering
 import math
 
+from keras.models import model_from_json
+
 ###########
 # CONSTANTS
 ##########
 DETECTION_GAP_THRESHOLD = 3
 
+
+# load json and create model
+json_file = open('ObjectPrediction/predictor.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+loaded_model = model_from_json(loaded_model_json)
+# load weights into new model
+loaded_model.load_weights("ObjectPrediction/predictor_weights.h5")
+print("Loaded model from disk")
 
 class BoundingBox:
     '''
@@ -257,8 +268,8 @@ def show_image(image, objects_list, ind=-1):
 
     np.copyto(image, np.array(image_pil))
 
-    plt.imshow(image)
-    plt.show()
+    # plt.imshow(image)
+    # plt.show()
 
 
 @total_ordering
