@@ -235,18 +235,30 @@ def show_image(image, objects_list, ind=-1):
     draw_objects_on_image(image, objects_list, ind)
     image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
     draw = ImageDraw.Draw(image_pil)
-    fnt = ImageFont.truetype('FreeMono.ttf', 24)
+    font = ImageFont.truetype('Helvetica.ttf', 12)
 
     for obj in objects_list:
         pt = obj.get_box(ind).get_top_left_point()
-        plt.text(pt[0], pt[1], "ID: " + str(obj.id), style='italic',
-        bbox={'facecolor':'red', 'alpha':0.5, 'pad':2})
-        draw.text((pt[0], pt[1]), "ID: " + str(obj.id), font=fnt, fill=(255,255,255,128))
+        display_str = "ID: " + str(obj.id)
+        text_width, text_height = font.getsize(display_str)
+        margin = np.ceil(0.05 * text_height)
+        text_bottom = pt[1]
+        left = pt[0]
+        draw.rectangle(
+            [(left, text_bottom), (left + text_width, text_bottom + text_height + 2 * margin)],
+            fill='red')
+        draw.text(
+            (left + margin, text_bottom + margin),
+            display_str,
+            fill='white',
+            font=font)
+
+        #draw.text((pt[0], pt[1]), "ID: " + str(obj.id), font=font, fill=(255,255,255,128))
 
     np.copyto(image, np.array(image_pil))
 
-    # plt.imshow(image)
-    # plt.show()
+    plt.imshow(image)
+    plt.show()
 
 
 @total_ordering

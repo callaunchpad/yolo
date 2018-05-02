@@ -64,7 +64,6 @@ def run_detection_on_buffer(images):
     frames = [Frame(image, create_object_list(sess, image)) for image in images]
     objs_after_cluster = dbscan_type_split(frames)
     #list_centroids(objs_after_cluster)
-
     return objs_after_cluster
 
 #INIT global objects List
