@@ -17,7 +17,7 @@ prediction_model = model_from_json(loaded_model_json)
 prediction_model.load_weights("ObjectPrediction/predictor_weights.h5")
 print("Loaded model from disk")
 
-__DATA_WINDOW__ = 5
+__DATA_WINDOW__ = 12
 
 def rnn_predict(x1pts, y1pts, x2pts, y2pts):
     corner1 = zip(x1pts[:__DATA_WINDOW__], y1pts[:__DATA_WINDOW__])
@@ -61,15 +61,13 @@ def rnn_predict(x1pts, y1pts, x2pts, y2pts):
 
 
 def hashCoords(x, y):
-    return (y*1000 + x)/(608608)
-
+    return (y*10000 + x)/(10801920)
 
 def reverseHash(code):
-    x = (code*608608)%1000
-    y = (code*608608)//1000
+    x = (code*10801920)%10000
+    y = (code*10801920)//10000
     return (x, y)
 
-#hash for 608 by 608 image coordinate: (y*1000 + x)/(608608)
 
 def generateCoords(start, end, step):
     generated = []
