@@ -8,3 +8,8 @@ YOLO_example/out
 YOLO_example/.DS_Store
 videos/highway.mp4
 .idea/
+
+yolo.weights
+file.jpg
+
+*.avi
